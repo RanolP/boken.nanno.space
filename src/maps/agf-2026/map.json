@@ -1,0 +1,2103 @@
+{
+ "id": "agf-2026",
+ "title": "AGF 2026",
+ "venue": "KINTEX 제1전시장 1-5홀",
+ "dates": [
+  "2026-12-04",
+  "2026-12-05",
+  "2026-12-06"
+ ],
+ "source": {
+  "url": "https://www.agfkorea.com/event?idx=3",
+  "image": "2_floor_plan_2026.jpg",
+  "widthPx": 15396,
+  "heightPx": 9075
+ },
+ "metersPerPx": 0.02083,
+ "categories": {
+  "A": {
+   "label": "Game",
+   "color": "#d65a9e"
+  },
+  "B": {
+   "label": "Animation",
+   "color": "#f6ca46"
+  },
+  "C": {
+   "label": "MD / Figure / Publishing",
+   "color": "#3aaeda"
+  },
+  "D": {
+   "label": "ETC",
+   "color": "#3a9e4e"
+  },
+  "R": {
+   "label": "Refresh Zone",
+   "color": "#7e4a9a"
+  },
+  "E": {
+   "label": "F&B",
+   "color": "#c64939"
+  }
+ },
+ "booths": [
+  {
+   "code": "A01",
+   "category": "A",
+   "x": 6198,
+   "y": 7081,
+   "w": 575,
+   "h": 422,
+   "exhibitor": {
+    "ko": "viviON",
+    "en": "viviON"
+   },
+   "logo": "/maps/agf-2026/logos/A01.webp"
+  },
+  {
+   "code": "A02",
+   "category": "A",
+   "x": 7343,
+   "y": 6784,
+   "w": 1421,
+   "h": 719,
+   "exhibitor": {
+    "ko": "실버팰리스",
+    "en": "Silver Palace"
+   },
+   "logo": "/maps/agf-2026/logos/A02.webp"
+  },
+  {
+   "code": "A03",
+   "category": "A",
+   "x": 9416,
+   "y": 6789,
+   "w": 425,
+   "h": 718,
+   "exhibitor": {
+    "ko": "세가/아틀러스",
+    "en": "SEGA/ATLUS"
+   }
+  },
+  {
+   "code": "A04",
+   "category": "A",
+   "x": 10393,
+   "y": 6939,
+   "w": 1082,
+   "h": 568,
+   "exhibitor": {
+    "ko": "요스타",
+    "en": "YOSTAR"
+   },
+   "logo": "/maps/agf-2026/logos/A04.webp"
+  },
+  {
+   "code": "A05",
+   "category": "A",
+   "x": 1015,
+   "y": 6015,
+   "w": 418,
+   "h": 276,
+   "exhibitor": {
+    "ko": "소녀전선 : 블루코버넌트",
+    "en": "GIRLS' FRONTLINE : THE LUNASIA COVENANT"
+   }
+  },
+  {
+   "code": "A06",
+   "category": "A",
+   "x": 3328,
+   "y": 5642,
+   "w": 1131,
+   "h": 707,
+   "exhibitor": {
+    "ko": "페이트/그랜드 오더",
+    "en": "Fate/Grand Order"
+   },
+   "logo": "/maps/agf-2026/logos/A06.webp"
+  },
+  {
+   "code": "A07",
+   "category": "A",
+   "x": 4896,
+   "y": 5784,
+   "w": 690,
+   "h": 553,
+   "exhibitor": {
+    "ko": "아크시스템웍스 아시아",
+    "en": "ARC SYSTEM WORKS ASIA"
+   },
+   "logo": "/maps/agf-2026/logos/A07.webp"
+  },
+  {
+   "code": "A08",
+   "category": "A",
+   "x": 10261,
+   "y": 4869,
+   "w": 570,
+   "h": 701,
+   "exhibitor": {
+    "ko": "hololive Dreams",
+    "en": "hololive Dreams"
+   },
+   "logo": "/maps/agf-2026/logos/A08.webp"
+  },
+  {
+   "code": "A09",
+   "category": "A",
+   "x": 11366,
+   "y": 5196,
+   "w": 420,
+   "h": 294,
+   "exhibitor": {
+    "ko": "고양이와 스프",
+    "en": "Cats and Soup"
+   },
+   "logo": "/maps/agf-2026/logos/A09.webp"
+  },
+  {
+   "code": "A10",
+   "category": "A",
+   "x": 12176,
+   "y": 4779,
+   "w": 422,
+   "h": 423,
+   "exhibitor": {
+    "ko": "에피드게임즈의 공식입장이 아닙니다",
+    "en": "None official of EPIDGames"
+   },
+   "logo": "/maps/agf-2026/logos/A10.webp"
+  },
+  {
+   "code": "A11",
+   "category": "A",
+   "x": 531,
+   "y": 3337,
+   "w": 472,
+   "h": 1696,
+   "exhibitor": {
+    "ko": "스마일게이트",
+    "en": "Smilegate"
+   },
+   "logo": "/maps/agf-2026/logos/A11.webp"
+  },
+  {
+   "code": "A12",
+   "category": "A",
+   "x": 1420,
+   "y": 3339,
+   "w": 1446,
+   "h": 847,
+   "exhibitor": {
+    "ko": "브라운더스트2",
+    "en": "BROWNDUST2"
+   },
+   "logo": "/maps/agf-2026/logos/A12.webp"
+  },
+  {
+   "code": "A13",
+   "category": "A",
+   "x": 4661,
+   "y": 3560,
+   "w": 566,
+   "h": 720,
+   "exhibitor": {
+    "ko": "스콘",
+    "en": "SCON"
+   },
+   "logo": "/maps/agf-2026/logos/A13.webp"
+  },
+  {
+   "code": "A14",
+   "category": "A",
+   "x": 6870,
+   "y": 3719,
+   "w": 1423,
+   "h": 692,
+   "exhibitor": {
+    "ko": "파레이돌리아",
+    "en": "Fareidolia"
+   },
+   "logo": "/maps/agf-2026/logos/A14.webp"
+  },
+  {
+   "code": "A15",
+   "category": "A",
+   "x": 6512,
+   "y": 3043,
+   "w": 716,
+   "h": 275,
+   "exhibitor": {
+    "ko": "위메이드커넥트",
+    "en": "Wemade Connect Co.,Ltd."
+   }
+  },
+  {
+   "code": "A16",
+   "category": "A",
+   "x": 7814,
+   "y": 2607,
+   "w": 1434,
+   "h": 711,
+   "exhibitor": {
+    "ko": "아주르 프로밀리아",
+    "en": "Azur Promilia"
+   },
+   "logo": "/maps/agf-2026/logos/A16.webp"
+  },
+  {
+   "code": "A17",
+   "category": "A",
+   "x": 10198,
+   "y": 2321,
+   "w": 953,
+   "h": 666,
+   "exhibitor": {
+    "ko": "승리의 여신: 니케",
+    "en": "GODDESS OF VICTORY: NIKKE"
+   },
+   "logo": "/maps/agf-2026/logos/A17.webp"
+  },
+  {
+   "code": "A18",
+   "category": "A",
+   "x": 1436,
+   "y": 2749,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "스테퍼 레트로:초능력 추리 퀘스트",
+    "en": "Staffer Retro"
+   }
+  },
+  {
+   "code": "A19",
+   "category": "A",
+   "x": 3406,
+   "y": 2746,
+   "w": 141,
+   "h": 133,
+   "exhibitor": {
+    "ko": "하나미즈온천아카데미 커플쳐부수기",
+    "en": "Hanamizu Onsen Academy Crush the couple"
+   },
+   "logo": "/maps/agf-2026/logos/A19.webp"
+  },
+  {
+   "code": "A20",
+   "category": "A",
+   "x": 531,
+   "y": 2607,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "주식회사 에어캡",
+    "en": "AIRCAP Inc."
+   },
+   "logo": "/maps/agf-2026/logos/A20.webp"
+  },
+  {
+   "code": "A21",
+   "category": "A",
+   "x": 1436,
+   "y": 2607,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "주식회사 브릿지뮤직",
+    "en": "Bridgemusic Corp."
+   },
+   "logo": "/maps/agf-2026/logos/A21.webp"
+  },
+  {
+   "code": "A22",
+   "category": "A",
+   "x": 2355,
+   "y": 2604,
+   "w": 416,
+   "h": 133,
+   "exhibitor": {
+    "ko": "Japan Pavilion(JETRO)",
+    "en": "Japan Pavilion(JETRO)"
+   },
+   "logo": "/maps/agf-2026/logos/A22.webp"
+  },
+  {
+   "code": "A23",
+   "category": "A",
+   "x": 531,
+   "y": 2172,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "SBS아카데미 게임학원",
+    "en": "SBS Academy GAME"
+   },
+   "logo": "/maps/agf-2026/logos/A23.webp"
+  },
+  {
+   "code": "A24",
+   "category": "A",
+   "x": 1970,
+   "y": 2169,
+   "w": 146,
+   "h": 136,
+   "exhibitor": {
+    "ko": "요시요시 스튜디오",
+    "en": "YoshiYoshi Studio"
+   },
+   "logo": "/maps/agf-2026/logos/A24.webp"
+  },
+  {
+   "code": "A25",
+   "category": "A",
+   "x": 2355,
+   "y": 2175,
+   "w": 416,
+   "h": 133,
+   "exhibitor": {
+    "ko": "STACKER BATTLE",
+    "en": "STACKER BATTLE"
+   },
+   "logo": "/maps/agf-2026/logos/A25.webp"
+  },
+  {
+   "code": "A26",
+   "category": "A",
+   "x": 3022,
+   "y": 2170,
+   "w": 138,
+   "h": 135,
+   "exhibitor": {
+    "ko": "실버레인",
+    "en": "SILVER RAIN"
+   },
+   "logo": "/maps/agf-2026/logos/A26.webp"
+  },
+  {
+   "code": "A27",
+   "category": "A",
+   "x": 1436,
+   "y": 2034,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "탭웨이브",
+    "en": "TAPWAVE"
+   },
+   "logo": "/maps/agf-2026/logos/A27.webp"
+  },
+  {
+   "code": "A28",
+   "category": "A",
+   "x": 531,
+   "y": 1651,
+   "w": 142,
+   "h": 130,
+   "exhibitor": {
+    "ko": "미술관에 남자가 너무 많아!",
+    "en": "my dear.M"
+   },
+   "logo": "/maps/agf-2026/logos/A28.webp"
+  },
+  {
+   "code": "A29",
+   "category": "A",
+   "x": 2015,
+   "y": 1647,
+   "w": 279,
+   "h": 133,
+   "exhibitor": {
+    "ko": "뮤즈 대쉬 2",
+    "en": "Muse Dash 2"
+   },
+   "logo": "/maps/agf-2026/logos/A29.webp"
+  },
+  {
+   "code": "A30",
+   "category": "A",
+   "x": 1198,
+   "y": 1506,
+   "w": 280,
+   "h": 133,
+   "exhibitor": {
+    "ko": "위프",
+    "en": "WHIF"
+   },
+   "logo": "/maps/agf-2026/logos/A30.webp"
+  },
+  {
+   "code": "A31",
+   "category": "A",
+   "x": 2933,
+   "y": 1506,
+   "w": 272,
+   "h": 133,
+   "exhibitor": {
+    "ko": "러브딜리버리 주희 애프터 스토리",
+    "en": "Love Delivery Juhee's After Story"
+   },
+   "logo": "/maps/agf-2026/logos/A31.webp"
+  },
+  {
+   "code": "A32",
+   "category": "A",
+   "x": 3801,
+   "y": 545,
+   "w": 267,
+   "h": 567,
+   "exhibitor": {
+    "ko": "(주) 밸로프",
+    "en": "VALOFE CO.,Ltd."
+   }
+  },
+  {
+   "code": "A33",
+   "category": "A",
+   "x": 4553,
+   "y": 541,
+   "w": 2848,
+   "h": 568,
+   "exhibitor": {
+    "ko": "아스트라에 오라티오",
+    "en": "Astrae Oratio"
+   },
+   "logo": "/maps/agf-2026/logos/A33.webp"
+  },
+  {
+   "code": "A34",
+   "category": "A",
+   "x": 7920,
+   "y": 743,
+   "w": 421,
+   "h": 369,
+   "exhibitor": {
+    "ko": "뱅드림! 아워 노트",
+    "en": "BanG Dream! Our Notes"
+   },
+   "logo": "/maps/agf-2026/logos/A34.webp"
+  },
+  {
+   "code": "A35",
+   "category": "A",
+   "x": 8921,
+   "y": 545,
+   "w": 277,
+   "h": 567,
+   "exhibitor": {
+    "ko": "지니뮤직 / 아우터플레인",
+    "en": "GENIE MUSIC / OUTERPLANE"
+   }
+  },
+  {
+   "code": "B01",
+   "category": "B",
+   "x": 4738,
+   "y": 6789,
+   "w": 991,
+   "h": 718,
+   "exhibitor": {
+    "ko": "네이버웹툰",
+    "en": "NAVER WEBTOON"
+   },
+   "logo": "/maps/agf-2026/logos/B01.webp"
+  },
+  {
+   "code": "B02",
+   "category": "B",
+   "x": 13428,
+   "y": 6789,
+   "w": 850,
+   "h": 718,
+   "exhibitor": {
+    "ko": "애니플러스샵",
+    "en": "ANIPLUS SHOP"
+   },
+   "logo": "/maps/agf-2026/logos/B02.webp"
+  },
+  {
+   "code": "B03",
+   "category": "B",
+   "x": 6198,
+   "y": 4910,
+   "w": 1397,
+   "h": 1427,
+   "exhibitor": {
+    "ko": "대원미디어 그룹",
+    "en": "DAEWON MEDIA GROUP"
+   },
+   "logo": "/maps/agf-2026/logos/B03.webp"
+  },
+  {
+   "code": "B04",
+   "category": "B",
+   "x": 8055,
+   "y": 5920,
+   "w": 711,
+   "h": 421,
+   "exhibitor": {
+    "ko": "애니메이트",
+    "en": "animate japan manga alliance Ltd."
+   },
+   "logo": "/maps/agf-2026/logos/B04.webp"
+  },
+  {
+   "code": "B05",
+   "category": "B",
+   "x": 9394,
+   "y": 5649,
+   "w": 286,
+   "h": 701,
+   "exhibitor": {
+    "ko": "에스엠지홀딩스",
+    "en": "SMG HOLDINGS Co., Ltd"
+   },
+   "logo": "/maps/agf-2026/logos/B05.webp"
+  },
+  {
+   "code": "B06",
+   "category": "B",
+   "x": 12175,
+   "y": 5641,
+   "w": 422,
+   "h": 696,
+   "exhibitor": {
+    "ko": "극장판 귀멸의 칼날: 무한성편 제1장",
+    "en": "Demon Slayer: Kimetsu no Yaiba Infinity Castle I"
+   },
+   "logo": "/maps/agf-2026/logos/B06.webp"
+  },
+  {
+   "code": "B07",
+   "category": "B",
+   "x": 14446,
+   "y": 6062,
+   "w": 120,
+   "h": 273,
+   "exhibitor": {
+    "ko": "애니프릭스",
+    "en": "ANIME FREAKS"
+   },
+   "logo": "/maps/agf-2026/logos/B07.webp"
+  },
+  {
+   "code": "B08",
+   "category": "B",
+   "x": 2649,
+   "y": 4762,
+   "w": 257,
+   "h": 434,
+   "exhibitor": {
+    "ko": "KADOKAWA",
+    "en": "KADOKAWA"
+   },
+   "logo": "/maps/agf-2026/logos/B08.webp"
+  },
+  {
+   "code": "B09",
+   "category": "B",
+   "x": 3746,
+   "y": 4921,
+   "w": 276,
+   "h": 275,
+   "exhibitor": {
+    "ko": "Aniplex Inc.",
+    "en": "Aniplex Inc."
+   },
+   "logo": "/maps/agf-2026/logos/B09.webp"
+  },
+  {
+   "code": "B10",
+   "category": "B",
+   "x": 3504,
+   "y": 3981,
+   "w": 734,
+   "h": 422,
+   "exhibitor": {
+    "ko": "크런치롤",
+    "en": "Crunchyroll"
+   },
+   "logo": "/maps/agf-2026/logos/B10.webp"
+  },
+  {
+   "code": "B11",
+   "category": "B",
+   "x": 3701,
+   "y": 3333,
+   "w": 367,
+   "h": 276,
+   "exhibitor": {
+    "ko": "Hakuhodo DY Music & Pictures Inc.",
+    "en": "Hakuhodo DY Music & Pictures Inc."
+   },
+   "logo": "/maps/agf-2026/logos/B11.webp"
+  },
+  {
+   "code": "B12",
+   "category": "B",
+   "x": 3022,
+   "y": 2746,
+   "w": 144,
+   "h": 133,
+   "exhibitor": {
+    "ko": "한국영상대학교 만화웹툰전공",
+    "en": "Korea University of Media Arts (KUMA) DEPARTMENT OF COMIC & WEBTOON"
+   },
+   "logo": "/maps/agf-2026/logos/B12.webp"
+  },
+  {
+   "code": "B13",
+   "category": "B",
+   "x": 4845,
+   "y": 2749,
+   "w": 276,
+   "h": 133,
+   "exhibitor": {
+    "ko": "케이티스튜디오지니",
+    "en": "KT Studiogenie Co.,Ltd"
+   }
+  },
+  {
+   "code": "C01",
+   "category": "C",
+   "x": 1911,
+   "y": 6932,
+   "w": 860,
+   "h": 571,
+   "exhibitor": {
+    "ko": "프레젠스월드",
+    "en": "PRESENCE WORLD"
+   },
+   "logo": "/maps/agf-2026/logos/C01.webp"
+  },
+  {
+   "code": "C02",
+   "category": "C",
+   "x": 11479,
+   "y": 6067,
+   "w": 267,
+   "h": 268,
+   "exhibitor": {
+    "ko": "(주)서울미디어코믹스",
+    "en": "SEOUL MEDIA COMICS"
+   },
+   "logo": "/maps/agf-2026/logos/C02.webp"
+  },
+  {
+   "code": "C03",
+   "category": "C",
+   "x": 4891,
+   "y": 4632,
+   "w": 694,
+   "h": 561,
+   "exhibitor": {
+    "ko": "(주)디앤씨미디어",
+    "en": "D&C MEDIA"
+   },
+   "logo": "/maps/agf-2026/logos/C03.webp"
+  },
+  {
+   "code": "C04",
+   "category": "C",
+   "x": 5718,
+   "y": 3043,
+   "w": 276,
+   "h": 275,
+   "exhibitor": {
+    "ko": "주식회사 와이앤케이미디어",
+    "en": "YNK MEDIA"
+   },
+   "logo": "/maps/agf-2026/logos/C04.webp"
+  },
+  {
+   "code": "C05",
+   "category": "C",
+   "x": 1058,
+   "y": 2746,
+   "w": 143,
+   "h": 133,
+   "exhibitor": {
+    "ko": "티토이스튜디오",
+    "en": "TTOYSTUDIO"
+   },
+   "logo": "/maps/agf-2026/logos/C05.webp"
+  },
+  {
+   "code": "C06",
+   "category": "C",
+   "x": 1970,
+   "y": 2746,
+   "w": 142,
+   "h": 133,
+   "exhibitor": {
+    "ko": "디엠피북스",
+    "en": "DMP BOOKSTORE"
+   },
+   "logo": "/maps/agf-2026/logos/C06.webp"
+  },
+  {
+   "code": "C07",
+   "category": "C",
+   "x": 2355,
+   "y": 2748,
+   "w": 416,
+   "h": 133,
+   "exhibitor": {
+    "ko": "한림사",
+    "en": "HANLIMSA"
+   },
+   "logo": "/maps/agf-2026/logos/C07.webp"
+  },
+  {
+   "code": "C08",
+   "category": "C",
+   "x": 3791,
+   "y": 2747,
+   "w": 276,
+   "h": 133,
+   "exhibitor": {
+    "ko": "(주)소미미디어",
+    "en": "SOMY MEDIA"
+   },
+   "logo": "/maps/agf-2026/logos/C08.webp"
+  },
+  {
+   "code": "C09",
+   "category": "C",
+   "x": 4318,
+   "y": 2602,
+   "w": 276,
+   "h": 276,
+   "exhibitor": {
+    "ko": "(주)하비프러스",
+    "en": "hobbyplus"
+   },
+   "logo": "/maps/agf-2026/logos/C09.webp"
+  },
+  {
+   "code": "C10",
+   "category": "C",
+   "x": 1058,
+   "y": 2604,
+   "w": 143,
+   "h": 133,
+   "exhibitor": {
+    "ko": "블룸",
+    "en": "VLooM"
+   },
+   "logo": "/maps/agf-2026/logos/C10.webp"
+  },
+  {
+   "code": "C11",
+   "category": "C",
+   "x": 3405,
+   "y": 2604,
+   "w": 141,
+   "h": 133,
+   "exhibitor": {
+    "ko": "(주)루츠돌",
+    "en": "LUTSDOLL"
+   }
+  },
+  {
+   "code": "C12",
+   "category": "C",
+   "x": 3791,
+   "y": 2604,
+   "w": 276,
+   "h": 133,
+   "exhibitor": {
+    "ko": "Minboo LTD",
+    "en": "Minboo LTD"
+   },
+   "logo": "/maps/agf-2026/logos/C12.webp"
+  },
+  {
+   "code": "C13",
+   "category": "C",
+   "x": 10308,
+   "y": 1354,
+   "w": 843,
+   "h": 566,
+   "exhibitor": {
+    "ko": "AmiAmi",
+    "en": "AmiAmi"
+   },
+   "logo": "/maps/agf-2026/logos/C13.webp"
+  },
+  {
+   "code": "C14",
+   "category": "C",
+   "x": 531,
+   "y": 2029,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "포카이브 스테이션",
+    "en": "POCAIVE STATION"
+   },
+   "logo": "/maps/agf-2026/logos/C14.webp"
+  },
+  {
+   "code": "C15",
+   "category": "C",
+   "x": 1058,
+   "y": 2029,
+   "w": 143,
+   "h": 133,
+   "exhibitor": {
+    "ko": "배재대학교 게임애니메이션전공",
+    "en": "Pai Chai University – Game Animation Major"
+   },
+   "logo": "/maps/agf-2026/logos/C15.webp"
+  },
+  {
+   "code": "C16",
+   "category": "C",
+   "x": 2355,
+   "y": 2033,
+   "w": 416,
+   "h": 133,
+   "exhibitor": {
+    "ko": "노벨피아",
+    "en": "NOVELPIA"
+   },
+   "logo": "/maps/agf-2026/logos/C16.webp"
+  },
+  {
+   "code": "C17",
+   "category": "C",
+   "x": 3022,
+   "y": 2025,
+   "w": 138,
+   "h": 135,
+   "exhibitor": {
+    "ko": "잇츠하비",
+    "en": "ITSHOBBY"
+   },
+   "logo": "/maps/agf-2026/logos/C17.webp"
+  },
+  {
+   "code": "C18",
+   "category": "C",
+   "x": 3421,
+   "y": 2025,
+   "w": 138,
+   "h": 135,
+   "exhibitor": {
+    "ko": "델라키",
+    "en": "Della key"
+   },
+   "logo": "/maps/agf-2026/logos/C18.webp"
+  },
+  {
+   "code": "C19",
+   "category": "C",
+   "x": 1726,
+   "y": 1648,
+   "w": 280,
+   "h": 133,
+   "exhibitor": {
+    "ko": "주식회사 이스타에그",
+    "en": "EstarEgg"
+   },
+   "logo": "/maps/agf-2026/logos/C19.webp"
+  },
+  {
+   "code": "C20",
+   "category": "C",
+   "x": 2933,
+   "y": 1648,
+   "w": 272,
+   "h": 133,
+   "exhibitor": {
+    "ko": "주식회사 스튜디오오리진",
+    "en": "studioorigin"
+   }
+  },
+  {
+   "code": "C21",
+   "category": "C",
+   "x": 531,
+   "y": 1510,
+   "w": 142,
+   "h": 131,
+   "exhibitor": {
+    "ko": "럭앤픽",
+    "en": "Luck & Pick"
+   },
+   "logo": "/maps/agf-2026/logos/C21.webp"
+  },
+  {
+   "code": "C22",
+   "category": "C",
+   "x": 911,
+   "y": 1506,
+   "w": 279,
+   "h": 133,
+   "exhibitor": {
+    "ko": "하이라이트 픽",
+    "en": "Highlight Pick"
+   },
+   "logo": "/maps/agf-2026/logos/C22.webp"
+  },
+  {
+   "code": "C23",
+   "category": "C",
+   "x": 1726,
+   "y": 1506,
+   "w": 569,
+   "h": 133,
+   "exhibitor": {
+    "ko": "주식회사 키쿠",
+    "en": "KIKU Co., Ltd."
+   },
+   "logo": "/maps/agf-2026/logos/C23.webp"
+  },
+  {
+   "code": "C24",
+   "category": "C",
+   "x": 2541,
+   "y": 1506,
+   "w": 146,
+   "h": 133,
+   "exhibitor": {
+    "ko": "가우리피규어",
+    "en": "GAURI FIGURE"
+   },
+   "logo": "/maps/agf-2026/logos/C24.webp"
+  },
+  {
+   "code": "C25",
+   "category": "C",
+   "x": 541,
+   "y": 834,
+   "w": 713,
+   "h": 275,
+   "exhibitor": {
+    "ko": "GNFTOYZ & 솜꼬리",
+    "en": "GNFTOYZ & Somggori"
+   },
+   "logo": "/maps/agf-2026/logos/C25.webp"
+  },
+  {
+   "code": "C26",
+   "category": "C",
+   "x": 2263,
+   "y": 545,
+   "w": 267,
+   "h": 567,
+   "exhibitor": {
+    "ko": "52TOYS · 화모선",
+    "en": "52TOYS · HEMOXIAN"
+   }
+  },
+  {
+   "code": "C27",
+   "category": "C",
+   "x": 3032,
+   "y": 545,
+   "w": 267,
+   "h": 567,
+   "exhibitor": {
+    "ko": "블로키코리아 유한책임회사",
+    "en": "Blokees Korea Co.,Ltd."
+   },
+   "logo": "/maps/agf-2026/logos/C27.webp"
+  },
+  {
+   "code": "D01",
+   "category": "D",
+   "x": 1294,
+   "y": 6924,
+   "w": 202,
+   "h": 202,
+   "exhibitor": {
+    "ko": "DJ Kazu",
+    "en": "DJ Kazu"
+   }
+  },
+  {
+   "code": "D02",
+   "category": "D",
+   "x": 3329,
+   "y": 6784,
+   "w": 718,
+   "h": 718,
+   "exhibitor": {
+    "ko": "Bushiroad",
+    "en": "Bushiroad"
+   },
+   "logo": "/maps/agf-2026/logos/D02.webp"
+  },
+  {
+   "code": "D03",
+   "category": "D",
+   "x": 12110,
+   "y": 7032,
+   "w": 760,
+   "h": 475,
+   "exhibitor": {
+    "ko": "구글플레이",
+    "en": "Google Play"
+   },
+   "logo": "/maps/agf-2026/logos/D03.webp"
+  },
+  {
+   "code": "D04",
+   "category": "D",
+   "x": 14446,
+   "y": 5490,
+   "w": 120,
+   "h": 547,
+   "exhibitor": {
+    "ko": "스마일게이트 희망스튜디오",
+    "en": "Smilegate Foundation"
+   },
+   "logo": "/maps/agf-2026/logos/D04.webp"
+  },
+  {
+   "code": "D05",
+   "category": "D",
+   "x": 1637,
+   "y": 4920,
+   "w": 418,
+   "h": 276,
+   "exhibitor": {
+    "ko": "NIJISANJI",
+    "en": "NIJISANJI"
+   },
+   "logo": "/maps/agf-2026/logos/D05.webp"
+  },
+  {
+   "code": "D06",
+   "category": "D",
+   "x": 7922,
+   "y": 4906,
+   "w": 841,
+   "h": 289,
+   "exhibitor": {
+    "ko": "크레플",
+    "en": "CREPPLE"
+   }
+  },
+  {
+   "code": "D07",
+   "category": "D",
+   "x": 9110,
+   "y": 4905,
+   "w": 571,
+   "h": 289,
+   "exhibitor": {
+    "ko": "레노버",
+    "en": "LENOVO"
+   },
+   "logo": "/maps/agf-2026/logos/D07.webp"
+  },
+  {
+   "code": "D08",
+   "category": "D",
+   "x": 8689,
+   "y": 3719,
+   "w": 559,
+   "h": 692,
+   "exhibitor": {
+    "ko": "베이비챗",
+    "en": "BabeChat"
+   },
+   "logo": "/maps/agf-2026/logos/D08.webp"
+  },
+  {
+   "code": "D09",
+   "category": "D",
+   "x": 9934,
+   "y": 3719,
+   "w": 1233,
+   "h": 692,
+   "exhibitor": {
+    "ko": "SOOP",
+    "en": "SOOP"
+   },
+   "logo": "/maps/agf-2026/logos/D09.webp"
+  },
+  {
+   "code": "D10",
+   "category": "D",
+   "x": 531,
+   "y": 2746,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "뮤",
+    "en": "MW:MEU"
+   },
+   "logo": "/maps/agf-2026/logos/D10.webp"
+  },
+  {
+   "code": "D11",
+   "category": "D",
+   "x": 1970,
+   "y": 2604,
+   "w": 142,
+   "h": 133,
+   "exhibitor": {
+    "ko": "크리에이터버스",
+    "en": "CREATORBUS"
+   },
+   "logo": "/maps/agf-2026/logos/D11.webp"
+  },
+  {
+   "code": "D12",
+   "category": "D",
+   "x": 3022,
+   "y": 2604,
+   "w": 144,
+   "h": 133,
+   "exhibitor": {
+    "ko": "콘텐츠 인재들의 부트캠프, GCC사관학교",
+    "en": "GCC academy, Global Contents Creator Bootcamp"
+   },
+   "logo": "/maps/agf-2026/logos/D12.webp"
+  },
+  {
+   "code": "D13",
+   "category": "D",
+   "x": 4845,
+   "y": 2607,
+   "w": 276,
+   "h": 133,
+   "exhibitor": {
+    "ko": "샤카샤카",
+    "en": "ShakaShaka"
+   },
+   "logo": "/maps/agf-2026/logos/D13.webp"
+  },
+  {
+   "code": "D14",
+   "category": "D",
+   "x": 1058,
+   "y": 2172,
+   "w": 143,
+   "h": 133,
+   "exhibitor": {
+    "ko": "홀로시브",
+    "en": "Holoceive"
+   },
+   "logo": "/maps/agf-2026/logos/D14.webp"
+  },
+  {
+   "code": "D15",
+   "category": "D",
+   "x": 1436,
+   "y": 2175,
+   "w": 289,
+   "h": 133,
+   "exhibitor": {
+    "ko": "국경없는의사회",
+    "en": "MSF"
+   },
+   "logo": "/maps/agf-2026/logos/D15.webp"
+  },
+  {
+   "code": "D16",
+   "category": "D",
+   "x": 3421,
+   "y": 2170,
+   "w": 138,
+   "h": 135,
+   "exhibitor": {
+    "ko": "스튜디오 세뇨",
+    "en": "studio segno"
+   },
+   "logo": "/maps/agf-2026/logos/D16.webp"
+  },
+  {
+   "code": "D17",
+   "category": "D",
+   "x": 3791,
+   "y": 2025,
+   "w": 276,
+   "h": 275,
+   "exhibitor": {
+    "ko": "그린기린",
+    "en": "GREENKIRIN"
+   },
+   "logo": "/maps/agf-2026/logos/D17.webp"
+  },
+  {
+   "code": "D18",
+   "category": "D",
+   "x": 8203,
+   "y": 1643,
+   "w": 555,
+   "h": 555,
+   "exhibitor": {
+    "ko": "젠잇",
+    "en": "Gen it"
+   },
+   "logo": "/maps/agf-2026/logos/D18.webp"
+  },
+  {
+   "code": "D19",
+   "category": "D",
+   "x": 1970,
+   "y": 2024,
+   "w": 146,
+   "h": 136,
+   "exhibitor": {
+    "ko": "VO6 TCG",
+    "en": "VO6 TCG"
+   },
+   "logo": "/maps/agf-2026/logos/D19.webp"
+  },
+  {
+   "code": "D20",
+   "category": "D",
+   "x": 909,
+   "y": 1649,
+   "w": 569,
+   "h": 133,
+   "exhibitor": {
+    "ko": "미스틱뮤즈",
+    "en": "Mystic Muse"
+   },
+   "logo": "/maps/agf-2026/logos/D20.webp"
+  },
+  {
+   "code": "D21",
+   "category": "D",
+   "x": 2541,
+   "y": 1648,
+   "w": 146,
+   "h": 133,
+   "exhibitor": {
+    "ko": "민화",
+    "en": "Minhwa"
+   },
+   "logo": "/maps/agf-2026/logos/D21.webp"
+  },
+  {
+   "code": "D22",
+   "category": "D",
+   "x": 3461,
+   "y": 1506,
+   "w": 275,
+   "h": 275,
+   "exhibitor": {
+    "ko": "카드하비",
+    "en": "CARD HOBBY"
+   },
+   "logo": "/maps/agf-2026/logos/D22.webp"
+  },
+  {
+   "code": "D23",
+   "category": "D",
+   "x": 1635,
+   "y": 835,
+   "w": 279,
+   "h": 278,
+   "exhibitor": {
+    "ko": "제로모션",
+    "en": "XEROmotion"
+   },
+   "logo": "/maps/agf-2026/logos/D23.webp"
+  },
+  {
+   "code": "R01",
+   "category": "R",
+   "x": 2073,
+   "y": 5737,
+   "w": 690,
+   "h": 553,
+   "exhibitor": {
+    "ko": "갤럭시 스토어 리프레시존",
+    "en": "Galaxy Store Refresh Zone"
+   },
+   "logo": "/maps/agf-2026/logos/R01.webp"
+  },
+  {
+   "code": "R02",
+   "category": "R",
+   "x": 10229,
+   "y": 5916,
+   "w": 701,
+   "h": 570,
+   "exhibitor": {
+    "ko": "갤럭시 스토어 리프레시존",
+    "en": "Galaxy Store Refresh Zone"
+   },
+   "logo": "/maps/agf-2026/logos/R02.webp"
+  },
+  {
+   "code": "R03",
+   "category": "R",
+   "x": 5718,
+   "y": 3719,
+   "w": 694,
+   "h": 561,
+   "exhibitor": {
+    "ko": "갤럭시 스토어 리프레시존",
+    "en": "Galaxy Store Refresh Zone"
+   },
+   "logo": "/maps/agf-2026/logos/R03.webp"
+  },
+  {
+   "code": "R04",
+   "category": "R",
+   "x": 4578,
+   "y": 1525,
+   "w": 662,
+   "h": 529,
+   "exhibitor": {
+    "ko": "NC 리프레시존",
+    "en": "NC Refresh Zone"
+   }
+  },
+  {
+   "code": "R05",
+   "category": "R",
+   "x": 6722,
+   "y": 1523,
+   "w": 661,
+   "h": 529,
+   "exhibitor": {
+    "ko": "NC 리프레시존",
+    "en": "NC Refresh Zone"
+   }
+  },
+  {
+   "code": "R06",
+   "category": "R",
+   "x": 9872,
+   "y": 689,
+   "w": 1287,
+   "h": 321,
+   "exhibitor": {
+    "ko": "F&B 리프레시존",
+    "en": "F&B Refresh Zone"
+   }
+  },
+  {
+   "code": "E01",
+   "category": "E",
+   "x": 9875,
+   "y": 545,
+   "w": 574,
+   "h": 135,
+   "exhibitor": {
+    "ko": "메가박스",
+    "en": "MEGABOX"
+   },
+   "logo": "/maps/agf-2026/logos/E01.webp"
+  },
+  {
+   "code": "E02",
+   "category": "E",
+   "x": 10459,
+   "y": 545,
+   "w": 419,
+   "h": 135,
+   "exhibitor": {
+    "ko": "애니플러스 콜라보카페",
+    "en": "ANIPLUS COLLAB CAFE"
+   },
+   "logo": "/maps/agf-2026/logos/E02.webp"
+  },
+  {
+   "code": "E03",
+   "category": "E",
+   "x": 10886,
+   "y": 545,
+   "w": 274,
+   "h": 135,
+   "exhibitor": {
+    "ko": "오사카당고",
+    "en": "OSAKA DANGO"
+   },
+   "logo": "/maps/agf-2026/logos/E03.webp"
+  }
+ ],
+ "areas": [
+  {
+   "id": "red-stage",
+   "label": "",
+   "kind": "stage",
+   "color": "#e993b9",
+   "x": 12556,
+   "y": 354,
+   "w": 1710,
+   "h": 833
+  },
+  {
+   "id": "red-stage-wing-left",
+   "label": "",
+   "kind": "stage",
+   "color": "#e591b9",
+   "x": 12072,
+   "y": 956,
+   "w": 404,
+   "h": 231,
+   "polygon": [
+    [
+     12072,
+     1089
+    ],
+    [
+     12257,
+     956
+    ],
+    [
+     12476,
+     956
+    ],
+    [
+     12476,
+     1187
+    ],
+    [
+     12072,
+     1187
+    ]
+   ]
+  },
+  {
+   "id": "red-stage-wing-right",
+   "label": "",
+   "kind": "stage",
+   "color": "#e591b9",
+   "x": 14345,
+   "y": 956,
+   "w": 405,
+   "h": 231,
+   "polygon": [
+    [
+     14345,
+     956
+    ],
+    [
+     14563,
+     956
+    ],
+    [
+     14750,
+     1089
+    ],
+    [
+     14750,
+     1187
+    ],
+    [
+     14345,
+     1187
+    ]
+   ]
+  },
+  {
+   "id": "audience-seat",
+   "label": "",
+   "kind": "seating",
+   "color": "#d35099",
+   "x": 11781,
+   "y": 1298,
+   "w": 3267,
+   "h": 2402,
+   "polygon": [
+    [
+     11781,
+     1727
+    ],
+    [
+     12554,
+     1298
+    ],
+    [
+     14275,
+     1298
+    ],
+    [
+     15048,
+     1727
+    ],
+    [
+     15048,
+     3700
+    ],
+    [
+     11781,
+     3700
+    ]
+   ]
+  },
+  {
+   "id": "blue-stage",
+   "label": "",
+   "kind": "stage",
+   "color": "#85bede",
+   "x": 13154,
+   "y": 4430,
+   "w": 696,
+   "h": 352
+  },
+  {
+   "id": "blue-stage-wing-left",
+   "label": "",
+   "kind": "stage",
+   "color": "#78b9dc",
+   "x": 12958,
+   "y": 4686,
+   "w": 153,
+   "h": 97,
+   "polygon": [
+    [
+     12958,
+     4731
+    ],
+    [
+     13024,
+     4686
+    ],
+    [
+     13111,
+     4686
+    ],
+    [
+     13111,
+     4783
+    ],
+    [
+     12958,
+     4783
+    ]
+   ]
+  },
+  {
+   "id": "blue-stage-wing-right",
+   "label": "",
+   "kind": "stage",
+   "color": "#78b9dc",
+   "x": 13892,
+   "y": 4686,
+   "w": 154,
+   "h": 97,
+   "polygon": [
+    [
+     13892,
+     4686
+    ],
+    [
+     13980,
+     4686
+    ],
+    [
+     14046,
+     4731
+    ],
+    [
+     14046,
+     4783
+    ],
+    [
+     13892,
+     4783
+    ]
+   ]
+  },
+  {
+   "id": "standing-zone",
+   "label": "",
+   "kind": "seating",
+   "color": "#319ac7",
+   "x": 12958,
+   "y": 4808,
+   "w": 1104,
+   "h": 1072
+  },
+  {
+   "id": "photo-zone",
+   "label": "",
+   "kind": "photo-zone",
+   "x": 5554,
+   "y": 7939,
+   "w": 887,
+   "h": 266,
+   "color": "#ac619a"
+  },
+  {
+   "id": "makeup-room",
+   "label": "",
+   "kind": "facility",
+   "x": 14948,
+   "y": 4079,
+   "w": 388,
+   "h": 678,
+   "color": "#828385"
+  },
+  {
+   "id": "exhibitor-lounge",
+   "label": "",
+   "kind": "facility",
+   "x": 14948,
+   "y": 4771,
+   "w": 388,
+   "h": 434,
+   "color": "#828385"
+  },
+  {
+   "id": "locker",
+   "label": "",
+   "kind": "facility",
+   "x": 58,
+   "y": 5528,
+   "w": 421,
+   "h": 1696,
+   "color": "#828385"
+  },
+  {
+   "id": "hall-1",
+   "label": "",
+   "kind": "hall-label",
+   "x": 1022,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "id": "hall-exit-1",
+   "label": "",
+   "kind": "floor-marking",
+   "x": 1204,
+   "y": 8064,
+   "w": 362,
+   "h": 168,
+   "color": "#ffffff"
+  },
+  {
+   "id": "hall-2",
+   "label": "",
+   "kind": "hall-label",
+   "x": 4093,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "id": "hall-exit-2",
+   "label": "",
+   "kind": "floor-marking",
+   "x": 4274,
+   "y": 8064,
+   "w": 362,
+   "h": 168,
+   "color": "#ffffff"
+  },
+  {
+   "id": "hall-3",
+   "label": "",
+   "kind": "hall-label",
+   "x": 7118,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "id": "hall-exit-3",
+   "label": "",
+   "kind": "floor-marking",
+   "x": 7299,
+   "y": 8064,
+   "w": 362,
+   "h": 168,
+   "color": "#ffffff"
+  },
+  {
+   "id": "hall-4",
+   "label": "",
+   "kind": "hall-label",
+   "x": 10135,
+   "y": 8269,
+   "w": 726,
+   "h": 263
+  },
+  {
+   "id": "hall-exit-4",
+   "label": "",
+   "kind": "floor-marking",
+   "x": 10317,
+   "y": 8064,
+   "w": 362,
+   "h": 168,
+   "color": "#ffffff"
+  },
+  {
+   "id": "hall-5",
+   "label": "",
+   "kind": "hall-label",
+   "x": 13105,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "id": "hall-exit-5",
+   "label": "",
+   "kind": "floor-marking",
+   "x": 13287,
+   "y": 8064,
+   "w": 362,
+   "h": 168,
+   "color": "#ffffff"
+  },
+  {
+   "id": "restroom-1",
+   "label": "",
+   "kind": "facility",
+   "x": 641,
+   "y": 8271,
+   "w": 268,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-2",
+   "label": "",
+   "kind": "facility",
+   "x": 1858,
+   "y": 8271,
+   "w": 268,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-3",
+   "label": "",
+   "kind": "facility",
+   "x": 3711,
+   "y": 8265,
+   "w": 268,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-4",
+   "label": "",
+   "kind": "facility",
+   "x": 4930,
+   "y": 8265,
+   "w": 268,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-5",
+   "label": "",
+   "kind": "facility",
+   "x": 6737,
+   "y": 8269,
+   "w": 267,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-6",
+   "label": "",
+   "kind": "facility",
+   "x": 7957,
+   "y": 8269,
+   "w": 267,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-7",
+   "label": "",
+   "kind": "facility",
+   "x": 9752,
+   "y": 8275,
+   "w": 267,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-8",
+   "label": "",
+   "kind": "facility",
+   "x": 10974,
+   "y": 8275,
+   "w": 267,
+   "h": 267,
+   "color": "#828385"
+  },
+  {
+   "id": "restroom-9",
+   "label": "",
+   "kind": "facility",
+   "x": 12723,
+   "y": 8275,
+   "w": 267,
+   "h": 267,
+   "color": "#828385"
+  }
+ ],
+ "markers": [
+  {
+   "icon": "/maps/agf-2026/icons/frame-top.webp",
+   "x": 0,
+   "y": 0,
+   "w": 15396,
+   "h": 60
+  },
+  {
+   "icon": "/maps/agf-2026/icons/frame-bottom.webp",
+   "x": 0,
+   "y": 9013,
+   "w": 15396,
+   "h": 62
+  },
+  {
+   "icon": "/maps/agf-2026/icons/frame-left.webp",
+   "x": 0,
+   "y": 0,
+   "w": 60,
+   "h": 9075
+  },
+  {
+   "icon": "/maps/agf-2026/icons/frame-right.webp",
+   "x": 15336,
+   "y": 0,
+   "w": 60,
+   "h": 9075
+  },
+  {
+   "icon": "/maps/agf-2026/icons/stage-line-left.webp",
+   "x": 11465,
+   "y": 0,
+   "w": 27,
+   "h": 4078
+  },
+  {
+   "icon": "/maps/agf-2026/icons/stage-line-bottom.webp",
+   "x": 11465,
+   "y": 4051,
+   "w": 3931,
+   "h": 27
+  },
+  {
+   "icon": "/maps/agf-2026/icons/red-stage.webp",
+   "x": 12556,
+   "y": 354,
+   "w": 1710,
+   "h": 833
+  },
+  {
+   "icon": "/maps/agf-2026/icons/red-stage-wing-left.webp",
+   "x": 12072,
+   "y": 956,
+   "w": 404,
+   "h": 231
+  },
+  {
+   "icon": "/maps/agf-2026/icons/red-stage-wing-right.webp",
+   "x": 14345,
+   "y": 956,
+   "w": 405,
+   "h": 231
+  },
+  {
+   "icon": "/maps/agf-2026/icons/audience-seat.webp",
+   "x": 11781,
+   "y": 1298,
+   "w": 3267,
+   "h": 2402
+  },
+  {
+   "icon": "/maps/agf-2026/icons/blue-stage.webp",
+   "x": 13154,
+   "y": 4430,
+   "w": 696,
+   "h": 352
+  },
+  {
+   "icon": "/maps/agf-2026/icons/blue-stage-wing-left.webp",
+   "x": 12958,
+   "y": 4686,
+   "w": 153,
+   "h": 97
+  },
+  {
+   "icon": "/maps/agf-2026/icons/blue-stage-wing-right.webp",
+   "x": 13892,
+   "y": 4686,
+   "w": 154,
+   "h": 97
+  },
+  {
+   "icon": "/maps/agf-2026/icons/standing-zone.webp",
+   "x": 12958,
+   "y": 4808,
+   "w": 1104,
+   "h": 1072
+  },
+  {
+   "icon": "/maps/agf-2026/icons/photo-zone.webp",
+   "x": 5554,
+   "y": 7939,
+   "w": 887,
+   "h": 266
+  },
+  {
+   "icon": "/maps/agf-2026/icons/makeup-room.webp",
+   "x": 14948,
+   "y": 4079,
+   "w": 388,
+   "h": 678
+  },
+  {
+   "icon": "/maps/agf-2026/icons/exhibitor-lounge.webp",
+   "x": 14948,
+   "y": 4771,
+   "w": 388,
+   "h": 434
+  },
+  {
+   "icon": "/maps/agf-2026/icons/locker.webp",
+   "x": 58,
+   "y": 5528,
+   "w": 421,
+   "h": 1696
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-1.webp",
+   "x": 1022,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-exit.webp",
+   "x": 1204,
+   "y": 8064,
+   "w": 362,
+   "h": 168
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-2.webp",
+   "x": 4093,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-exit.webp",
+   "x": 4274,
+   "y": 8064,
+   "w": 362,
+   "h": 168
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-3.webp",
+   "x": 7118,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-exit.webp",
+   "x": 7299,
+   "y": 8064,
+   "w": 362,
+   "h": 168
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-4.webp",
+   "x": 10135,
+   "y": 8269,
+   "w": 726,
+   "h": 263
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-exit.webp",
+   "x": 10317,
+   "y": 8064,
+   "w": 362,
+   "h": 168
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-5.webp",
+   "x": 13105,
+   "y": 8269,
+   "w": 725,
+   "h": 263
+  },
+  {
+   "icon": "/maps/agf-2026/icons/hall-exit.webp",
+   "x": 13287,
+   "y": 8064,
+   "w": 362,
+   "h": 168
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 641,
+   "y": 8271,
+   "w": 268,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 1858,
+   "y": 8271,
+   "w": 268,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 3711,
+   "y": 8265,
+   "w": 268,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 4930,
+   "y": 8265,
+   "w": 268,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 6737,
+   "y": 8269,
+   "w": 267,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 7957,
+   "y": 8269,
+   "w": 267,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 9752,
+   "y": 8275,
+   "w": 267,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 10974,
+   "y": 8275,
+   "w": 267,
+   "h": 267
+  },
+  {
+   "icon": "/maps/agf-2026/icons/restroom.webp",
+   "x": 12723,
+   "y": 8275,
+   "w": 267,
+   "h": 267
+  }
+ ]
+}

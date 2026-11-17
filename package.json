@@ -1,0 +1,32 @@
+{
+  "name": "boken",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "font": "scripts/subset-font.sh",
+    "logos": "node scripts/fetch-logos.mjs && npm run logos:bg",
+    "logos:bg": "uv run --with pillow --with numpy --with scipy python scripts/remove-logo-bg.py",
+    "markers": "uv run --with pillow==13.0.0 --with numpy==2.5.5 --with scipy==1.18.1 python scripts/crop-markers.py scripts/agf-2026-markers.json",
+    "structure": "scripts/kintex-structure.sh",
+    "textures:kintex": "uv run --with opencv-python-headless==5.0.0.93 --with numpy==2.5.5 python scripts/kintex-textures.py"
+  },
+  "type": "module",
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.8"
+  },
+  "private": true
+}

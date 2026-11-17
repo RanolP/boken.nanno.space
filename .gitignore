@@ -1,0 +1,6 @@
+node_modules
+dist
+.cache
+*.tsbuildinfo
+# Baked from KINTEX photos whose licence is unchecked; rebuild locally with `npm run textures:kintex`.
+public/maps/*/textures/

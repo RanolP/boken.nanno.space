@@ -1,0 +1,33 @@
+{
+  "plan": "https://www.agfkorea.com/img/2_floor_plan_2026.jpg",
+  "cache": ".cache/agf-2026/2_floor_plan_2026.jpg",
+  "out": "public/maps/agf-2026/icons",
+  "maxPx": 1024,
+  "icons": [
+    { "name": "restroom", "crop": [641, 8271, 268, 267], "knockout": "none" },
+    { "name": "hall-exit", "crop": [1204, 8064, 362, 168], "knockout": "edge" },
+    { "name": "hall-1", "crop": [1022, 8269, 725, 263], "knockout": "white" },
+    { "name": "hall-2", "crop": [4093, 8269, 725, 263], "knockout": "white" },
+    { "name": "hall-3", "crop": [7118, 8269, 725, 263], "knockout": "white" },
+    { "name": "hall-4", "crop": [10135, 8269, 726, 263], "knockout": "white" },
+    { "name": "hall-5", "crop": [13105, 8269, 725, 263], "knockout": "white" },
+    { "name": "frame-top", "crop": [0, 0, 15396, 60], "knockout": "none" },
+    { "name": "frame-bottom", "crop": [0, 9013, 15396, 62], "knockout": "none" },
+    { "name": "frame-left", "crop": [0, 0, 60, 9075], "knockout": "none" },
+    { "name": "frame-right", "crop": [15336, 0, 60, 9075], "knockout": "none" },
+    { "name": "stage-line-left", "crop": [11465, 0, 27, 4078], "knockout": "none" },
+    { "name": "stage-line-bottom", "crop": [11465, 4051, 3931, 27], "knockout": "none" },
+    { "name": "red-stage", "crop": [12556, 354, 1710, 833], "knockout": "edge" },
+    { "name": "red-stage-wing-left", "crop": [12072, 956, 404, 231], "knockout": "edge" },
+    { "name": "red-stage-wing-right", "crop": [14345, 956, 405, 231], "knockout": "edge" },
+    { "name": "audience-seat", "crop": [11781, 1298, 3267, 2402], "knockout": "edge" },
+    { "name": "blue-stage", "crop": [13154, 4430, 696, 352], "knockout": "edge" },
+    { "name": "blue-stage-wing-left", "crop": [12958, 4686, 153, 97], "knockout": "edge" },
+    { "name": "blue-stage-wing-right", "crop": [13892, 4686, 154, 97], "knockout": "edge" },
+    { "name": "standing-zone", "crop": [12958, 4808, 1104, 1072], "knockout": "edge" },
+    { "name": "photo-zone", "crop": [5554, 7939, 887, 266], "knockout": "none" },
+    { "name": "makeup-room", "crop": [14948, 4079, 388, 678], "knockout": "none" },
+    { "name": "exhibitor-lounge", "crop": [14948, 4771, 388, 434], "knockout": "none" },
+    { "name": "locker", "crop": [58, 5528, 421, 1696], "knockout": "none" }
+  ]
+}

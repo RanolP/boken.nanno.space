@@ -1,0 +1,114 @@
+# booth code <TAB> boothName exactly as listed by the official AGF exhibitor API
+# (https://api.agfkorea.com:3070/front/api/getAttend?yy=2026, rendered on
+# https://www.agfkorea.com/exhibition). `npm run logos` resolves each name to
+# its `logoJpg` URL. Booths not listed here have no unambiguous logo; see the
+# trailing "# unmatched" block for why.
+A01	viviON
+A02	실버 팰리스
+A04	Yostar
+A06	페이트그랜드오더
+A07	아크시스템웍스 아시아
+A08	hololive Dreams
+A09	고양이와 스프: 마법의 레시피
+A10	에피드게임즈의 공식입장이 아닙니다
+A11	Smilegate
+A12	브라운더스트2
+A13	SCON
+A14	파레이돌리아
+A16	아주르 프로밀리아
+A17	승리의 여신: 니케
+A19	하나미즈온천아카데미 커플쳐부수기
+# A20/A21: matched by exhibitor account id (aircap, bridgemusic); the image is the product brand.
+A20	아가타
+A21	DODORI
+A22	Japan Pavilion (JETRO)
+A23	SBS아카데미 게임학원
+A24	요시요시 스튜디오
+A25	스태커배틀 (STACKER BATTLE)
+A26	실버레인
+A27	Tabwave
+A28	미술관에 남자가 너무 많아!
+A29	Muse Dash 2
+A30	위프(WHIF)
+A31	러브딜리버리 주희 애프터 스토리
+A33	NC - Astrae Oratio
+A34	뱅드림! 아워 노트
+B01	네이버웹툰
+B02	애니플러스 샵
+B03	대원미디어(주)
+B04	animate KOREA
+B05	에스엠지홀딩스
+B06	극장판 귀멸의 칼날: 무한성편 제1장
+B07	애니프릭스 - ANIME FREAKS
+B08	KADOKAWA
+B09	ANIPLEX
+B10	Crunchyroll
+B11	Hakuhodo DY Music & Pictures Inc.
+B12	한국영상대학교 만화웹툰콘텐츠과
+C01	프레젠스월드 (PRESENCE WORLD)
+C02	(주)서울미디어코믹스
+C03	(주)디앤씨미디어
+C04	YNK미디어
+C05	T toy studio
+C06	디엠피 북스토아
+C07	한림사
+C08	(주)소미미디어
+C09	캐릭터 피규어, 굿즈 전문 하비프러스
+C10	VLooM
+C12	Minboo（ミンボウ）｜인기 IP와 소비자를 잇는 캐릭터 기업
+C13	아미아미
+C14	포카이브 스테이션
+C15	배재대학교 게임애니메이션전공
+C16	노벨피아
+C17	잇츠하비
+C18	델라키 l Della key (아티산 키캡 스튜디오/Artisan keycap)
+C19	이스타에그
+C21	럭앤픽 (Luck & Pick)
+C22	하이라이트 픽 HIGHLIGHT PICK
+C23	주식회사 키쿠
+C24	대한민국 피규어 제조사, 가우리피규어
+C25	GNFTOYZ
+C27	BLOKEES - 상상력을 펼치고, 즐거움을 나누다!
+D02	BUSHIROAD
+D03	Google Play
+D04	스마일게이트 희망스튜디오
+D05	NIJISANJI
+D07	Lenovo
+D08	베이비챗
+D09	SOOP
+D10	Magical World☆MEU!
+D11	Creatorbus
+D12	콘텐츠 인재들의 부트캠프, GCC사관학교
+D13	ShakaShaka by decoplay
+# D14/D22: matched by exhibitor account id (holoceive, cardhobbykorea).
+D14	새로운 형태의 굿즈!
+D15	국경없는의사회 한국
+D16	스튜디오 세뇨
+D17	NO FUN, NO TOMORROW. 타협 없는 재미를 그리는 노블코믹스 스튜디오 그린기린
+D18	젠잇 — 거대한 서사, 끝없는 모험!
+D19	VO6 TCG
+D20	미스틱뮤즈(Mystic Muse)
+D21	민화 Minhwa | 카드 슬리브
+D22	카하문방구
+D23	캐릭터에 움직임을 입히는 광학식 모션캡쳐 XEROmotion
+R01	갤럭시 스토어
+R02	갤럭시 스토어
+R03	갤럭시 스토어
+E01	MEGABOX
+E02	ANIPLUS 콜라보카페
+E03	오사카당고
+# unmatched:
+# A03 SEGA/ATLUS: only per-title entries (메타포: 리판타지오, 페르소나4 리바이벌), no company logo
+# A05 소녀전선 : 블루코버넌트: no entry
+# A15 위메이드커넥트: no entry
+# A18 스테퍼 레트로: no entry
+# A32 밸로프: no entry
+# A35 지니뮤직 / 아우터플레인: two entries (GENIE MUSIC, 아우터플레인) for one booth
+# B13 케이티스튜디오지니: only per-title entries (GACHIAKUTA, 원펀맨)
+# C11 루츠돌: no entry
+# C20 스튜디오오리진: only 플로토이 under account "origin"; link to studioorigin unconfirmed
+# C26 52TOYS · 화모선: two entries (52TOYS, 화모선 (HEMOXIAN)) for one booth
+# D01 DJ Kazu: no entry
+# D06 크레플: account CREPPLE lists only SANDISK
+# R04/R05 NC 리프레시존: only the Astrae Oratio title entry
+# R06 F&B 리프레시존: no entry

@@ -3,6 +3,7 @@ import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Edges } from "@react-three/drei";
 import * as THREE from "three";
 import type { MapData } from "../maps/types";
+import { debug } from "./DebugInspector";
 import { faceWalker } from "./labelFit";
 import { INK_DARK, INK_LIGHT, WALLS, inkOn, logoPlate, logoSamples, type Ink } from "./contrast";
 import { POST_M, boothPosts, rectOf, type ViewMode } from "./walk";
@@ -91,6 +92,7 @@ export const Booths = ({ data, booths, selected, view, onSelect }: BoothsProps) 
           scale={[sel.w * m + 0.4, BOOTH_H + 0.3, sel.h * m + 0.4]}
           renderOrder={1}
           raycast={NO_RAYCAST}
+          {...debug({ what: "선택 하이라이트", source: "임의", ref: `booth ${sel.code}`, component: "BoothFrame.tsx (Booths)" })}
         >
           <boxGeometry args={[1, 1, 1]} />
           {/* Road view stands close enough that the tinted box fills the screen like a veil: outline only there. */}
@@ -167,6 +169,12 @@ const DroneBooths = ({ data, booths, font, logos, pick }: PartProps) => {
     <mesh
       geometry={geom}
       material={materials}
+      {...debug({
+        what: "부스 (드론용)",
+        source: "배치도",
+        ref: ({ faceIndex }) => `booth ${faceIndex === undefined ? "?" : booths[faceIndex < n * DRONE_SIDE_TRIS ? Math.floor(faceIndex / DRONE_SIDE_TRIS) : Math.floor((faceIndex - n * DRONE_SIDE_TRIS) / 2)]?.code}`,
+        component: "BoothFrame.tsx (DroneBooths)",
+      })}
       onClick={pick((e) => (e.faceIndex == null ? null : e.faceIndex < n * DRONE_SIDE_TRIS ? Math.floor(e.faceIndex / DRONE_SIDE_TRIS) : Math.floor((e.faceIndex - n * DRONE_SIDE_TRIS) / 2)))}
     />
   );
@@ -209,6 +217,13 @@ const topAtlas = (data: MapData, booths: Booth[], logos: Logos | null, gl: THREE
 
 /** Quads per fascia (front margin, front copy, front margin, back, top, bottom, two ends) and so triangles per booth. */
 const FASCIA_TRIS_PER_BOOTH = 4 * 8 * 2;
+/** Counter box: chest height, inset of one person's width per footprint axis, minimum side, and the copy band's gap below the box top. Meters. */
+const BOX_H_M = 1.3;
+const PERSON_M = 0.6;
+const BOX_MIN_M = 0.4;
+const BOX_BAND_GAP = 0.1;
+/** Quads per box side (below band, above band, margin, copy, margin) x 4, plus the top; so triangles per booth. */
+const BOX_TRIS_PER_BOOTH = (4 * 5 + 1) * 2;
 
 const RoadBooths = ({ data, booths, font, logos, pick }: PartProps) => {
   const m = data.metersPerPx;
@@ -238,6 +253,15 @@ const RoadBooths = ({ data, booths, font, logos, pick }: PartProps) => {
   const fasciaMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, map: fascia?.atlas.tex ?? null }), [fascia]);
   useEffect(() => () => fasciaMat.dispose(), [fasciaMat]);
 
+  // Counter boxes: the same copy layout on a shrunk booth, in an atlas of its own (the fascia's is left as it is).
+  const boxes = useMemo(() => booths.map((b) => boxOf(b, m)), [booths, m]);
+  const boxCopy = useMemo(() => (font ? fasciaAtlas(data, boxes, logos, gl) : null), [data, boxes, logos, font, gl]);
+  useEffect(() => () => boxCopy?.atlas.tex.dispose(), [boxCopy]);
+  const boxGeom = useMemo(() => boxGeometry(data, boxes, boxCopy), [data, boxes, boxCopy]);
+  useEffect(() => () => boxGeom.dispose(), [boxGeom]);
+  const boxMat = useMemo(() => new THREE.MeshStandardMaterial({ vertexColors: true, map: boxCopy?.atlas.tex ?? null }), [boxCopy]);
+  useEffect(() => () => boxMat.dispose(), [boxMat]);
+
   const signs = useMemo(() => (font ? signAtlas(data, booths, logos, gl) : null), [data, booths, logos, font, gl]);
   useEffect(() => () => signs?.atlas.tex.dispose(), [signs]);
   // Cut-out (alpha test), not blended: the rounded plate's corners are the only transparent texels.
@@ -250,6 +274,7 @@ const RoadBooths = ({ data, booths, font, logos, pick }: PartProps) => {
         ref={posts}
         args={[undefined, POST_MATERIAL, data.booths.length * 4]}
         frustumCulled={false}
+        {...debug({ what: "부스 기둥", source: "배치도", ref: ({ instanceId }) => `booth ${instanceId === undefined ? "?" : booths[Math.floor(instanceId / 4)]?.code} post ${(instanceId ?? 0) % 4}`, component: "BoothFrame.tsx (RoadBooths)", note: "height 3 m (BOOTH_H) is 임의" })}
         onClick={pick((e) => (e.instanceId == null ? null : Math.floor(e.instanceId / 4)))}
       >
         <boxGeometry args={[1, 1, 1]} />
@@ -257,7 +282,26 @@ const RoadBooths = ({ data, booths, font, logos, pick }: PartProps) => {
       <mesh
         geometry={geom}
         material={fasciaMat}
+        {...debug({
+          what: "부스 벽 (파시아)",
+          source: "배치도",
+          ref: ({ faceIndex }) => `booth ${faceIndex === undefined ? "?" : booths[Math.floor(faceIndex / FASCIA_TRIS_PER_BOOTH)]?.code}`,
+          component: "BoothFrame.tsx (RoadBooths)",
+          note: "0.4 m band at the booth top; text/logo from booth data",
+        })}
         onClick={pick((e) => (e.faceIndex == null ? null : Math.floor(e.faceIndex / FASCIA_TRIS_PER_BOOTH)))}
+      />
+      <mesh
+        geometry={boxGeom}
+        material={boxMat}
+        {...debug({
+          what: "부스 카운터 박스 (로고 면)",
+          source: "임의",
+          ref: ({ faceIndex }) => `booth ${faceIndex === undefined ? "?" : booths[Math.floor(faceIndex / BOX_TRIS_PER_BOOTH)]?.code}`,
+          component: "BoothFrame.tsx (RoadBooths)",
+          note: "chest-high box, footprint = booth − 0.6 m per axis, per user request",
+        })}
+        onClick={pick((e) => (e.faceIndex == null ? null : Math.floor(e.faceIndex / BOX_TRIS_PER_BOOTH)))}
       />
       {signs &&
         signMat &&
@@ -372,6 +416,65 @@ const fasciaGeometry = (data: MapData, booths: Booth[], fascia: ReturnType<typeo
   return g.build();
 };
 
+/** The booth shrunk to its counter box: PERSON_M less per footprint axis (at least BOX_MIN_M), same centre. Source px. */
+const boxOf = (b: Booth, m: number): Booth => {
+  const w = Math.max(BOX_MIN_M, b.w * m - PERSON_M) / m;
+  const h = Math.max(BOX_MIN_M, b.h * m - PERSON_M) / m;
+  return { ...b, x: b.x + (b.w - w) / 2, y: b.y + (b.h - h) / 2, w, h };
+};
+
+/**
+ * Counter boxes as one mesh, BOX_TRIS_PER_BOOTH triangles per booth. `boxes` are the booths run through boxOf, and
+ * `copy` is the fascia atlas built from them. Each side face is plain fill above and below the copy band, and
+ * margin | copy | margin inside it (the copy tile carries the fill itself); the top is the plain fill.
+ */
+const boxGeometry = (data: MapData, boxes: Booth[], copy: ReturnType<typeof fasciaAtlas> | null) => {
+  const m = data.metersPerPx;
+  const g = new QuadBuilder();
+  const fill = new THREE.Color();
+  const white = new THREE.Color(1, 1, 1);
+  const plain = copy ? copy.atlas.uv(0)(0.5, 0.5) : null;
+  const plainUv = plain ? ([plain, plain, plain, plain] as UV4) : null;
+  const bt = BOX_H_M - BOX_BAND_GAP;
+  const bb = bt - FASCIA_H;
+  boxes.forEach((b, i) => {
+    fill.set(boothFill(data, b));
+    boothSides(b, m).forEach((s, k) => {
+      const L = s.len;
+      const n = new THREE.Vector3(s.nx, 0, s.nz);
+      // Right as seen by a viewer outside, facing the side.
+      const R = new THREE.Vector3(s.nz, 0, -s.nx);
+      const P = (along: number, y: number) => new THREE.Vector3(s.x + R.x * along, y, s.z + R.z * along);
+      const t = copy ? copy.tileOf[i][k] : 0;
+      const cw = copy ? copy.widths[t - 1] : 0;
+      const uv = copy ? copy.atlas.uv(t) : null;
+      const face = (a: number, c: number, y0: number, y1: number, isCopy: boolean) =>
+        g.quad(
+          [P(a, y0), P(c, y0), P(c, y1), P(a, y1)],
+          [n.x, 0, n.z],
+          isCopy && uv ? [uv(0, 1), uv(1, 1), uv(1, 0), uv(0, 0)] : plainUv,
+          isCopy && uv ? white : fill,
+        );
+      face(-L / 2, L / 2, 0, bb, false);
+      face(-L / 2, L / 2, bt, BOX_H_M, false);
+      face(-L / 2, -cw / 2, bb, bt, false);
+      face(-cw / 2, cw / 2, bb, bt, true);
+      face(cw / 2, L / 2, bb, bt, false);
+    });
+    const cx = (b.x + b.w / 2) * m;
+    const cz = (b.y + b.h / 2) * m;
+    const hw = (b.w * m) / 2;
+    const hd = (b.h * m) / 2;
+    g.quad(
+      [new THREE.Vector3(cx - hw, BOX_H_M, cz + hd), new THREE.Vector3(cx + hw, BOX_H_M, cz + hd), new THREE.Vector3(cx + hw, BOX_H_M, cz - hd), new THREE.Vector3(cx - hw, BOX_H_M, cz - hd)],
+      [0, 1, 0],
+      plainUv,
+      fill,
+    );
+  });
+  return g.build();
+};
+
 /** Fascia copy: "<code> <name>", or the code alone for a booth without an exhibitor name. */
 const fasciaText = (b: Booth) => {
   const name = boothName(b);
@@ -471,7 +574,7 @@ const Billboard = ({ booth: b, m, size, uv, material }: { booth: Booth; m: numbe
   });
   return (
     <group ref={ref} matrixAutoUpdate={false}>
-      <mesh geometry={geom} material={material} raycast={NO_RAYCAST} />
+      <mesh geometry={geom} material={material} raycast={NO_RAYCAST} {...debug({ what: "간판 (로고/이름)", source: "배치도", ref: `booth ${b.code}`, component: "BoothFrame.tsx (Billboard)", note: "floating position/size 임의" })} />
     </group>
   );
 };

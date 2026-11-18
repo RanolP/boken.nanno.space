@@ -7,6 +7,7 @@ import { Building } from "./Building";
 import { BuildingDetails } from "./BuildingDetails";
 import { HallInterior } from "./HallInterior";
 import { Booths, FONT, buildAtlas, useLabelFont, type Tile } from "./BoothFrame";
+import { DebugProbe, debug } from "./DebugInspector";
 import { inkOn, type Ink } from "./contrast";
 import type { MoveInput, Pose, ViewMode } from "./walk";
 
@@ -47,7 +48,7 @@ interface FloorProps {
 }
 
 export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }: Props) => {
-  const pose = useRef<Pose | null>(null);
+  const pose = useRef<Pose | null>(startPose(data));
   const W = data.source.widthPx * data.metersPerPx;
   const D = data.source.heightPx * data.metersPerPx;
   // Keyed on data.markers itself: a fresh [] each render would reload every image.
@@ -75,6 +76,7 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }:
       {view === "road" && <HallInterior data={data} decals={decals} />}
       <Areas data={data} images={images} fontReady={fontReady} />
       <Booths data={data} booths={booths} selected={selected} view={view} onSelect={onSelect} />
+      {view === "road" && <DebugProbe />}
       {view === "drone" ? (
         <DroneRig data={data} flyKey={flyKey} selected={selected} input={input} pose={pose} />
       ) : (
@@ -161,11 +163,21 @@ const AreaMesh = ({ area: a, m, markers, images, fontReady }: AreaMeshProps) => 
     [mats],
   );
 
+  const tag = debug({ what: `${AREA_KO[a.kind]} "${a.label}"`, source: "배치도", ref: `areas[id=${a.id}]`, component: "Scene.tsx (AreaMesh)", note: `height ${s.h} m from AREA_STYLE (임의)` });
   return a.polygon ? (
-    <mesh geometry={geom} rotation-x={-Math.PI / 2} material={mats.list} />
+    <mesh geometry={geom} rotation-x={-Math.PI / 2} material={mats.list} {...tag} />
   ) : (
-    <mesh geometry={geom} position={[(a.x + a.w / 2) * m, s.h / 2, (a.y + a.h / 2) * m]} material={mats.list} />
+    <mesh geometry={geom} position={[(a.x + a.w / 2) * m, s.h / 2, (a.y + a.h / 2) * m]} material={mats.list} {...tag} />
   );
+};
+
+const AREA_KO: Record<AreaKind, string> = {
+  stage: "무대",
+  seating: "좌석",
+  facility: "편의시설",
+  "photo-zone": "포토존",
+  "hall-label": "홀 라벨",
+  "floor-marking": "바닥 표시",
 };
 
 /** Longest canvas side for an area top, in texels. */
@@ -261,7 +273,7 @@ const Floor = ({ data, decals, visible }: FloorProps) => {
     },
     [built],
   );
-  return <mesh geometry={built.geom} material={built.mats} visible={visible} />;
+  return <mesh geometry={built.geom} material={built.mats} visible={visible} {...debug({ what: "바닥 (드론용)", source: "배치도", ref: "plan decals", component: "Scene.tsx (Floor)" })} />;
 };
 
 export const floorDecals = (data: MapData, images: Images | null, fontReady: boolean): Decal[] => {
@@ -436,3 +448,15 @@ const AREA_STYLE: Record<AreaKind, { h: number; color: string }> = {
 
 /** Floor colour, the surface under hall labels and floor markings. */
 const FLOOR = "#ffffff";
+/** Opening pose: 3 m inside Hall 1's lobby entrance, facing into the hall (-z). Null without CAD structure. */
+const startPose = (data: MapData): Pose | null => {
+  const s = data.structure;
+  const hall1 = s?.halls?.find((h) => h.id === "hall1");
+  if (!s || !hall1) return null;
+  const xs = hall1.polygon.map((p) => p[0]);
+  const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
+  const door = s.openings.find((o) => o.kind === "entrance" && o.side === "lobby" && (o.a[0] + o.b[0]) / 2 > x0 && (o.a[0] + o.b[0]) / 2 < x1);
+  if (!door) return null;
+  const m = data.metersPerPx;
+  return { x: ((door.a[0] + door.b[0]) / 2) * m, z: ((door.a[1] + door.b[1]) / 2) * m - 3, yaw: 0 };
+};

@@ -683,8 +683,11 @@ def main():
             out["walls"].append({"a": [cx, round(y0 + half, 1)], "b": [cx, round(y1 - half, 1)], "side": "exit-pillar", "heightM": 6, "thicknessM": 0.8})
     for o in out["openings"]:
         in_modelled = any(hall_x[h][0] <= o["a"][0] <= hall_x[h][1] for h in MODELLED_EXIT_HALLS)
+        # User: keep this gap's filler (drawn semi-transparent, detail skipped) and fill the wall above it,
+        # as a door head from 3 m (the exit doors' height) up, drawn like every opening with heightM.
         if o["side"] == "lobby" and o["kind"] == "door" and in_modelled:
             out["walls"].append({"a": o["a"], "b": o["b"], "side": "exit-door", "heightM": 3, "thicknessM": 0.2})
+            o["heightM"] = 3
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=1) + "\n")
     print(f"wrote {OUT.relative_to(ROOT)}: {len(out['walls'])} walls, {len(out['openings'])} openings, {len(out['partitions'])} partitions")
 

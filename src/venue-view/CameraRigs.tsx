@@ -3,7 +3,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { MapData } from "../maps/types";
-import { collide, freeSpotNear, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
+import { isTypingTarget, collide, freeSpotNear, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
+import { getNearDoor, nearestDoor, setNearDoor, setPointerLocked, toggleDoor } from "./roadInteract";
 
 type Booth = MapData["booths"][number];
 
@@ -178,9 +179,28 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose }: RoadRig
     const el = gl.domElement;
     let drag: { id: number; x: number; y: number } | null = null;
     const down = (e: PointerEvent) => {
-      if (drag || (e.pointerType === "mouse" && e.button !== 0)) return;
+      if (document.pointerLockElement === el || drag || (e.pointerType === "mouse" && e.button !== 0)) return;
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
     };
+    // Pointer lock: the first click on the canvas captures the mouse, then movement alone turns the view (same sensitivity
+    // and pitch clamp as the drag). Esc releases it (browser default). The locking click is swallowed here (stopPropagation
+    // in the window capture phase, before R3F's handler) so it cannot select the booth under the cursor.
+    const look = (dx: number, dy: number) => {
+      walker.current.yaw -= dx * LOOK_RAD_PER_PX;
+      pitch.current = THREE.MathUtils.clamp(pitch.current - dy * LOOK_RAD_PER_PX, -1.2, 1.2);
+    };
+    const lockClick = (e: MouseEvent) => {
+      if (e.target !== el || document.pointerLockElement === el) return;
+      e.stopPropagation();
+      void el.requestPointerLock?.();
+    };
+    const lockMove = (e: MouseEvent) => {
+      if (document.pointerLockElement === el) look(e.movementX, e.movementY);
+    };
+    const lockChange = () => setPointerLocked(document.pointerLockElement === el);
+    window.addEventListener("click", lockClick, true);
+    window.addEventListener("mousemove", lockMove);
+    document.addEventListener("pointerlockchange", lockChange);
     const move = (e: PointerEvent) => {
       if (!drag || e.pointerId !== drag.id) return;
       walker.current.yaw -= (e.clientX - drag.x) * LOOK_RAD_PER_PX;
@@ -196,12 +216,31 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose }: RoadRig
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     return () => {
+      window.removeEventListener("click", lockClick, true);
+      window.removeEventListener("mousemove", lockMove);
+      document.removeEventListener("pointerlockchange", lockChange);
+      if (document.pointerLockElement === el) document.exitPointerLock();
+      setPointerLocked(false);
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
     };
   }, [gl]);
+
+  // E toggles the nearest exit door within reach (both leaves together).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "KeyE" || e.repeat || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
+      const i = getNearDoor();
+      if (i !== null) toggleDoor(i);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      setNearDoor(null);
+    };
+  }, []);
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.1);
@@ -220,6 +259,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose }: RoadRig
     }
     // Also runs at rest, so a booth un-hidden on top of the walker pushes it out.
     collide(w, obstacles, W, D);
+    setNearDoor(nearestDoor(w.x, w.z));
     // View bob rides on the camera only; the walker/collision position stays untouched. Phase advances by the
     // distance actually covered after collision, so pushing into a wall does not bob.
     const dist = Math.hypot(w.x - x0, w.z - z0);
@@ -242,8 +282,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose }: RoadRig
 /** Drone distance from the walker when switching back from road view. */
 const HANDOFF_DIST = 45;
 const EYE_H = 1.6;
-const WALK = 2.3;
-const RUN = 4.2;
+// Doubled from 2.3 / 4.2 m/s (real pace felt sluggish across 70 m halls). Bob cadence below stays per step.
+const WALK = 4.6;
+const RUN = 8.4;
 // View bob. A step is one foot strike; the head is lowest at each strike, so vertical offset is |sin(pi*phase)| per
 // step and lateral sway is sin(pi*phase) (half the step frequency). Cadence (steps/s): race walking 2.99 Hz at 12 km/h
 // (Hanley et al., PMC6191987); running 150.02 + 6.012*V spm = 175 spm = 2.92 Hz at 4.2 m/s (Van Oeveren 2019).

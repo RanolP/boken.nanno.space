@@ -3,6 +3,7 @@ import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MapData } from "../maps/types";
 import { type HallRect, useHallProbes } from "./Environment";
+import { debug } from "./DebugInspector";
 import type { Decal } from "./Scene";
 import { CEILING_TILE_M, makeCeilingTexture, makeFloorTexture } from "./textures";
 
@@ -21,6 +22,21 @@ const LIGHT_PITCH_M = TRUSS_BAY_M / 2;
 const LIGHT_SIZE_M: [number, number, number] = [1.6, 0.25, 0.6];
 /** Seen through the openings beyond the walls: a soft overcast grey rather than the drone view's paper white. */
 const ROAD_BACKGROUND = "#a9aeb5";
+
+/** Off while the user reviews the hall surface by surface: no photo bake, no procedural canvas, flat colours only. */
+const TEXTURES = false;
+/** Road view shows only what the KINTEX CAD drawing has: no invented trusses, light fixtures or wall cladding. */
+export const CAD_ONLY = true;
+const PLAIN_FLOOR = "#c4c4c4";
+const PLAIN_CEILING = "#8a8f96";
+const PARTITION_TRACK_W_M = 0.3;
+/** The bake draws these as one pixel at its 0.08 m floor resolution. */
+const FLOOR_LINE_W_M = 0.08;
+const FLOOR_DETAIL_Y_M = 0.007;
+const FLOOR_DETAIL_H_M = 0.006;
+/** User: trench covers are painted, black outline + pale sky-blue fill. Outline width is a placeholder. */
+const TRENCH_OUTLINE_M = 0.05;
+const TRENCH_FILL_LIFT_M = 0.002;
 
 /**
  * Road-view hall interior: polished-concrete floor over the plan's white floor, and the 15 m space-frame
@@ -60,6 +76,7 @@ export const HallInterior = ({ data, decals }: Props) => {
   useEffect(() => () => ceilingGeo?.dispose(), [ceilingGeo]);
 
   const floor = useMemo(() => {
+    if (!TEXTURES) return { tex: null, mat: new THREE.MeshStandardMaterial({ color: PLAIN_FLOOR, roughness: 1, metalness: 0 }) };
     const tex = makeFloorTexture(W, D, aniso);
     // Same canvas as roughness: joints and dark flecks read a touch glossier, pale mottling a touch duller.
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughnessMap: tex, roughness: 1.15, metalness: 0 });
@@ -68,6 +85,7 @@ export const HallInterior = ({ data, decals }: Props) => {
 
   const ceiling = useMemo(() => {
     if (!rect) return null;
+    if (!TEXTURES) return { tex: null, mat: new THREE.MeshStandardMaterial({ color: PLAIN_CEILING, roughness: 0.9, metalness: 0.2 }) };
     const tex = makeCeilingTexture(rect.x1 - rect.x0, rect.z1 - rect.z0, aniso);
     // FrontSide only: the plane faces down, so it is invisible from above.
     const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9, metalness: 0.2 });
@@ -86,14 +104,14 @@ export const HallInterior = ({ data, decals }: Props) => {
 
   useEffect(
     () => () => {
-      floor.tex.dispose();
+      floor.tex?.dispose();
       floor.mat.dispose();
     },
     [floor],
   );
   useEffect(
     () => () => {
-      ceiling?.tex.dispose();
+      ceiling?.tex?.dispose();
       ceiling?.mat.dispose();
     },
     [ceiling],
@@ -107,7 +125,8 @@ export const HallInterior = ({ data, decals }: Props) => {
     [parts],
   );
 
-  const photo = usePhotoManifest(data.id);
+  const manifest = usePhotoManifest(data.id);
+  const photo = TEXTURES ? manifest : null;
 
   useEffect(() => {
     const prev = scene.background;
@@ -121,16 +140,19 @@ export const HallInterior = ({ data, decals }: Props) => {
     <group>
       {/* With baked photos the floor is the manifest's single plane (trenches, joints and seams baked in). */}
       {!photo && (
-        <mesh rotation-x={-Math.PI / 2} position={[W / 2, 0, D / 2]} material={floor.mat} raycast={() => null}>
-          <planeGeometry args={[W, D]} />
-        </mesh>
+        <>
+          <mesh rotation-x={-Math.PI / 2} position={[W / 2, 0, D / 2]} material={floor.mat} raycast={() => null} {...debug({ what: "바닥", source: "임의", ref: "plain colour; extent = plan size (data.source)", component: "HallInterior.tsx" })}>
+            <planeGeometry args={[W, D]} />
+          </mesh>
+          <CadFloorFeatures data={data} />
+        </>
       )}
       {rect && ceiling && ceilingGeo && (
         <>
-          <mesh geometry={ceilingGeo} material={ceiling.mat} raycast={() => null} />
+          <mesh geometry={ceilingGeo} material={ceiling.mat} raycast={() => null} {...debug({ what: "천장", source: "CAD", ref: "structure.outline + ceilingM", component: "HallInterior.tsx", note: "colour is 임의" })} />
           {/* The baked photos already show the real space frame and lights; instanced ones would double them. */}
-          {!photo && <Trusses rect={rect} box={parts.box} mat={parts.trussMat} />}
-          {!photo && <Fixtures rect={rect} box={parts.box} mat={parts.lightMat} />}
+          {!photo && !CAD_ONLY && <Trusses rect={rect} box={parts.box} mat={parts.trussMat} />}
+          {!photo && !CAD_ONLY && <Fixtures rect={rect} box={parts.box} mat={parts.lightMat} />}
         </>
       )}
       {photo && (
@@ -235,17 +257,146 @@ interface InstancedProps {
 }
 
 /** Fills an InstancedMesh once from a list of [position, scale]; nothing runs per frame. */
-const useInstances = (ref: React.RefObject<THREE.InstancedMesh | null>, items: [THREE.Vector3, THREE.Vector3][]) => {
+type InstanceTransform = [THREE.Vector3, THREE.Vector3, THREE.Quaternion?];
+
+const useInstances = (ref: React.RefObject<THREE.InstancedMesh | null>, items: InstanceTransform[]) => {
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
     const mtx = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    items.forEach(([p, sc], i) => mesh.setMatrixAt(i, mtx.compose(p, q, sc)));
+    const identity = new THREE.Quaternion();
+    items.forEach(([p, sc, q], i) => mesh.setMatrixAt(i, mtx.compose(p, q ?? identity, sc)));
     mesh.count = items.length;
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
   }, [ref, items]);
+};
+
+type FloorInstance = { transform: InstanceTransform; index: number; x: number };
+type FloorFeatureProps = {
+  box: THREE.BoxGeometry;
+  items: FloorInstance[];
+  what: string;
+  path: string;
+  color: string;
+  roughness: number;
+  metalness: number;
+  envMap?: THREE.Texture | null;
+};
+
+const FloorFeatureInstances = ({ box, items, what, path, color, roughness, metalness, envMap = null }: FloorFeatureProps) => {
+  const ref = useRef<THREE.InstancedMesh>(null);
+  const transforms = useMemo(() => items.map((item) => item.transform), [items]);
+  const material = useMemo(() => new THREE.MeshStandardMaterial({ color, roughness, metalness, envMap }), [color, roughness, metalness, envMap]);
+  useInstances(ref, transforms);
+  useEffect(() => () => material.dispose(), [material]);
+  return (
+    <instancedMesh
+      ref={ref}
+      args={[box, material, items.length]}
+      raycast={() => null}
+      {...debug({
+        what,
+        source: "CAD",
+        ref: ({ instanceId }) => `${path}[${instanceId === undefined ? "?" : (items[instanceId]?.index ?? "?")}]`,
+        component: "HallInterior.tsx",
+      })}
+    />
+  );
+};
+
+const floorBox = (r: [number, number, number, number], index: number, m: number): FloorInstance => {
+  const x = ((r[0] + r[2]) / 2) * m;
+  return {
+    index,
+    x,
+    transform: [
+      new THREE.Vector3(x, FLOOR_DETAIL_Y_M, ((r[1] + r[3]) / 2) * m),
+      new THREE.Vector3(Math.max((r[2] - r[0]) * m, FLOOR_LINE_W_M), FLOOR_DETAIL_H_M, Math.max((r[3] - r[1]) * m, FLOOR_LINE_W_M)),
+    ],
+  };
+};
+
+const floorSegment = (segment: { a: [number, number]; b: [number, number] }, index: number, m: number, width: number): FloorInstance => {
+  const dx = (segment.b[0] - segment.a[0]) * m;
+  const dz = (segment.b[1] - segment.a[1]) * m;
+  const x = ((segment.a[0] + segment.b[0]) / 2) * m;
+  return {
+    index,
+    x,
+    transform: [
+      new THREE.Vector3(x, FLOOR_DETAIL_Y_M, ((segment.a[1] + segment.b[1]) / 2) * m),
+      new THREE.Vector3(Math.hypot(dx, dz), FLOOR_DETAIL_H_M, width),
+      new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -Math.atan2(dz, dx)),
+    ],
+  };
+};
+
+const CadFloorFeatures = ({ data }: Pick<Props, "data">) => {
+  const structure = data.structure;
+  const details = structure?.details;
+  const m = data.metersPerPx;
+  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const halls = useMemo(
+    () =>
+      (structure?.halls ?? []).map((hall) => {
+        const polygon = hall.polygon.map(([x, z]): [number, number] => [x * m, z * m]);
+        const xs = polygon.map(([x]) => x);
+        const zs = polygon.map(([, z]) => z);
+        return { id: hall.id, polygon, rect: [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)] as HallRect };
+      }),
+    [structure, m],
+  );
+  const { probes, capture } = useHallProbes(halls);
+  const features = useMemo(() => {
+    const trenches = (details?.trenches ?? []).map((r, i) => floorBox(r, i, m));
+    // User: trench covers are black-paint outline + pale sky-blue paint fill. Fill = cover inset by the outline width, raised to clear the outline's top.
+    const trenchFills = (details?.trenches ?? []).map((r, i) => {
+      const o = TRENCH_OUTLINE_M / m;
+      const f = floorBox([r[0] + o, r[1] + o, r[2] - o, r[3] - o], i, m);
+      f.transform[0].y += TRENCH_FILL_LIFT_M;
+      return f;
+    });
+    const partitions = (structure?.partitions ?? []).map((segment, i) => floorSegment(segment, i, m, PARTITION_TRACK_W_M));
+    const trenchLines = (details?.trenchLines ?? []).map((segment, i) => floorSegment(segment, i, m, FLOOR_LINE_W_M));
+    const joints = (details?.joints ?? []).map((segment, i) => floorSegment(segment, i, m, FLOOR_LINE_W_M));
+    return { trenches, trenchFills, partitions, trenchLines, joints };
+  }, [structure, details, m]);
+  const metalGroups = useMemo(() => {
+    const groups = probes.map((probe) => ({ id: probe.id, envMap: probe.envMap, trenches: [] as FloorInstance[], partitions: [] as FloorInstance[] }));
+    if (!groups.length) return [{ id: "all", envMap: null, trenches: features.trenches, partitions: features.partitions }];
+    const add = (key: "trenches" | "partitions", item: FloorInstance) => {
+      const group = groups.reduce((nearest, candidate) => {
+        const distance = (g: (typeof groups)[number]) => {
+          const probe = probes.find((p) => p.id === g.id);
+          return probe ? Math.max(probe.rect[0] - item.x, item.x - probe.rect[2], 0) : Infinity;
+        };
+        return distance(candidate) < distance(nearest) ? candidate : nearest;
+      });
+      group[key].push(item);
+    };
+    features.trenches.forEach((item) => add("trenches", item));
+    features.partitions.forEach((item) => add("partitions", item));
+    return groups;
+  }, [features, probes]);
+  useEffect(() => () => box.dispose(), [box]);
+  useEffect(() => {
+    if (details) capture();
+  }, [details, capture]);
+  if (!structure || !details) return null;
+  return (
+    <group>
+      {metalGroups.map((group) => (
+        <group key={group.id}>
+          {group.trenches.length > 0 && <FloorFeatureInstances box={box} items={group.trenches} what="트렌치 덮개 외곽선 (검은 페인트)" path="structure.details.trenches" color="#141414" roughness={0.8} metalness={0} />}
+          {group.partitions.length > 0 && <FloorFeatureInstances box={box} items={group.partitions} what="칸막이 레일" path="structure.partitions" color="rgb(95, 100, 107)" roughness={0.5} metalness={0.5} envMap={group.envMap} />}
+        </group>
+      ))}
+      {features.trenchFills.length > 0 && <FloorFeatureInstances box={box} items={features.trenchFills} what="트렌치 덮개 (옅은 하늘 페인트)" path="structure.details.trenches" color="#cfe2f0" roughness={0.8} metalness={0} />}
+      {features.trenchLines.length > 0 && <FloorFeatureInstances box={box} items={features.trenchLines} what="트렌치 선" path="structure.details.trenchLines" color="rgb(74, 72, 70)" roughness={0.6} metalness={0} />}
+      {features.joints.length > 0 && <FloorFeatureInstances box={box} items={features.joints} what="줄눈" path="structure.details.joints" color="rgb(74, 72, 70)" roughness={0.6} metalness={0} />}
+    </group>
+  );
 };
 
 /** Primary trusses spanning north-south every bay, plus lighter east-west ties at the bay lines. */
@@ -267,7 +418,7 @@ const Trusses = ({ rect, box, mat }: InstancedProps) => {
     return out;
   }, [rect]);
   useInstances(ref, items);
-  return <instancedMesh ref={ref} args={[box, mat, items.length]} raycast={() => null} />;
+  return <instancedMesh ref={ref} args={[box, mat, items.length]} raycast={() => null} {...debug({ what: "트러스", source: "임의", ref: ({ instanceId }) => `truss #${instanceId}`, component: "HallInterior.tsx (Trusses)" })} />;
 };
 
 type PhotoSurface = {
@@ -305,7 +456,7 @@ const usePhotoManifest = (mapId: string) => {
 /** Distance the wall faces sit inside the CAD wall line: half the 0.4 m wall box plus a hair, so they win the depth test. */
 const WALL_INSET_M = 0.21;
 
-type PhotoItem = { id: string; geo: THREE.BufferGeometry; mat: THREE.Material };
+type PhotoItem = { id: string; kind: PhotoSurface["kind"]; geo: THREE.BufferGeometry; mat: THREE.Material };
 
 /** Quad over `[x0, z0, x1, z1]` at height y, with UVs = its world position over `full` (v = 1 at full's z0). */
 const rectQuad = ([x0, z0, x1, z1]: HallRect, y: number, full: HallRect) => {
@@ -439,7 +590,7 @@ const PhotoSurfaces = ({
           });
           const strip: HallRect = [sx0, full[1], sx1, full[3]];
           const geo = notches.length ? polyGeo(rectMinusNotches(strip, notches), s.y ?? 0, full, 1, vOf) : rectQuad(strip, s.y ?? 0, full);
-          return { id: `${s.id}-${p.id}`, geo, mat };
+          return { id: `${s.id}-${p.id}`, kind: s.kind, geo, mat };
         });
       }
       // Unlit: walls and ceilings are only looked at, so the photo's own lighting stays baked in.
@@ -450,7 +601,7 @@ const PhotoSurfaces = ({
       mat.polygonOffsetUnits = -4;
       if (s.rect) {
         const geo = s.polygon ? polyGeo(s.polygon, s.y ?? 0, s.rect, -1, vOf) : rectQuad(s.rect, s.y ?? 0, s.rect);
-        return [{ id: s.id, geo, mat }];
+        return [{ id: s.id, kind: s.kind, geo, mat }];
       }
       const [ax, az] = s.p0!;
       const [bx, bz] = s.p1!;
@@ -469,7 +620,7 @@ const PhotoSurfaces = ({
       geo.setAttribute("position", new THREE.Float32BufferAttribute([ax + ox, 0, az + oz, bx + ox, 0, bz + oz, bx + ox, h, bz + oz, ax + ox, h, az + oz], 3));
       geo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1], 2));
       geo.setIndex([0, 1, 2, 0, 2, 3]);
-      return [{ id: s.id, geo, mat }];
+      return [{ id: s.id, kind: s.kind, geo, mat }];
     });
   }, [manifest, textures, floorMaps, probes, halls, footprint]);
   useEffect(
@@ -490,11 +641,13 @@ const PhotoSurfaces = ({
   return (
     <group>
       {items.map((it) => (
-        <mesh key={it.id} geometry={it.geo} material={it.mat} raycast={() => null} />
+        <mesh key={it.id} geometry={it.geo} material={it.mat} raycast={() => null} {...debug({ what: `${PHOTO_KO[it.kind]} (사진 베이크)`, source: "CAD", ref: `manifest.surfaces ${it.id}`, component: "HallInterior.tsx (PhotoSurfaces)" })} />
       ))}
     </group>
   );
 };
+
+const PHOTO_KO: Record<PhotoSurface["kind"], string> = { floor: "바닥", ceiling: "천장", wall: "벽" };
 
 /** Matte floor paint: roughness 0.8 (ORM green 204 under the material's roughness 1), occlusion 1, metalness 0. */
 const PAINT_ORM = "rgb(255, 204, 0)";
@@ -564,5 +717,5 @@ const Fixtures = ({ rect, box, mat }: InstancedProps) => {
     return out;
   }, [rect]);
   useInstances(ref, items);
-  return <instancedMesh ref={ref} args={[box, mat, items.length]} raycast={() => null} />;
+  return <instancedMesh ref={ref} args={[box, mat, items.length]} raycast={() => null} {...debug({ what: "조명", source: "임의", ref: ({ instanceId }) => `fixture #${instanceId}`, component: "HallInterior.tsx (Fixtures)" })} />;
 };

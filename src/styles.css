@@ -39,6 +39,8 @@ body { background: var(--bg); color: var(--fg); }
 .segmented button { padding: 6px 10px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 13px; cursor: pointer; color: var(--fg); white-space: nowrap; }
 .segmented button[aria-pressed="true"] { background: var(--fg); color: #fff; }
 .hint { padding: 2px 6px; border-radius: 4px; background: #fffe; font-size: 12px; color: var(--muted); }
+.road-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); pointer-events: none; }
+.road-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; pointer-events: none; background: #fff; box-shadow: 0 0 0 1px #000a; }
 .move-pad { display: none; position: absolute; left: 12px; bottom: 12px; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 4px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .move-pad button { border: 1px solid var(--line); border-radius: 12px; background: #fffd; font-size: 18px; color: var(--fg); touch-action: none; }
 .move-pad button:active { background: #dfe4ec; }
@@ -61,3 +63,7 @@ body { background: var(--bg); color: var(--fg); }
   .title { min-width: 0; }
   .panel { top: auto; right: 0; left: 0; bottom: 0; width: auto; border-radius: 16px 16px 0 0; padding-bottom: 20px; }
 }
+.dbg-crosshair { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; background: linear-gradient(#f0f, #f0f) center / 100% 1px no-repeat, linear-gradient(#f0f, #f0f) center / 1px 100% no-repeat; filter: drop-shadow(0 0 1px #000); }
+.dbg-hud { position: absolute; left: 8px; bottom: 8px; max-width: min(560px, calc(100% - 16px)); padding: 6px 8px; font: 11px/1.35 ui-monospace, monospace; color: #e8e8e8; background: rgba(0, 0, 0, 0.7); border-radius: 4px; pointer-events: none; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dbg-what { font-weight: 700; font-size: 13px; color: #fff; }
+.dbg-dim { opacity: 0.65; font-weight: 400; }

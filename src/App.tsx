@@ -6,7 +6,8 @@ import { Scene } from "./venue-view/Scene";
 import { Panel } from "./booth-finder/Panel";
 import { Search } from "./booth-finder/Search";
 import { Legend } from "./booth-finder/Legend";
-import { MovePad, ViewToggle } from "./venue-view/ViewControls";
+import { DebugHud } from "./venue-view/DebugInspector";
+import { MovePad, RoadHud, ViewToggle } from "./venue-view/ViewControls";
 import { isTypingTarget, useMoveKeys, type MoveInput, type ViewMode } from "./venue-view/walk";
 
 export const App = () => {
@@ -30,7 +31,7 @@ const MapView = ({ entry }: MapViewProps) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [flyKey, setFlyKey] = useState(0);
-  const [view, setView] = useState<ViewMode>("drone");
+  const [view, setView] = useState<ViewMode>("road");
   const [input] = useState<MoveInput>(() => new Set());
   useMoveKeys(input);
 
@@ -100,6 +101,8 @@ const MapView = ({ entry }: MapViewProps) => {
           <ViewToggle view={view} onChange={setView} />
         </div>
         {view === "road" && <MovePad input={input} />}
+        {view === "road" && <DebugHud />}
+        {view === "road" && <RoadHud />}
         {selectedBooth && (
           <Panel
             booth={selectedBooth}

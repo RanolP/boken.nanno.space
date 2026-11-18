@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import type { AreaKind, MapData } from "../maps/types";
+import { openDoors } from "./roadInteract";
 
 type Booth = MapData["booths"][number];
 
@@ -11,8 +12,8 @@ export type MoveInput = Set<MoveKey>;
 export type Pose = { x: number; z: number; yaw: number };
 /** Axis-aligned floor rectangle in world meters. */
 export type Rect = { x0: number; z0: number; x1: number; z1: number };
-/** Wall run from (ax, az) to (bx, bz) in world meters, `r` = half its thickness. */
-export type Wall = { ax: number; az: number; bx: number; bz: number; r: number };
+/** Wall run from (ax, az) to (bx, bz) in world meters, `r` = half its thickness. `idx` = structure.walls index; an open door's wall is skipped. */
+export type Wall = { ax: number; az: number; bx: number; bz: number; r: number; idx?: number };
 /** Everything the walker cannot enter, plus the booth footprints (open, walkable) that `rectAt` still finds. */
 export type Obstacles = { rects: Rect[]; walls: Wall[]; fixed?: FixedGrid; booths: Rect[] };
 /** Interior fixtures (columns, service-band walls, lifts) bucketed into square cells so a step only tests its own cell. */
@@ -119,7 +120,8 @@ export const obstaclesOf = (data: MapData, booths: Booth[]): Obstacles => {
   return {
     rects: data.areas.filter((a) => SOLID_AREAS.has(a.kind)).map((o) => rectOf(o, m)),
     walls: [
-      ...(data.structure?.walls ?? []).map((w) => ({
+      ...(data.structure?.walls ?? []).map((w, idx) => ({
+        idx,
         ax: w.a[0] * m,
         az: w.a[1] * m,
         bx: w.b[0] * m,
@@ -158,6 +160,7 @@ export const collide = (p: { x: number; z: number }, obs: Obstacles, W: number, 
 const pushOut = (p: { x: number; z: number }, rects: Rect[], walls: Wall[]) => {
   {
     for (const w of walls) {
+      if (w.idx !== undefined && openDoors.has(w.idx)) continue;
       const vx = w.bx - w.ax;
       const vz = w.bz - w.az;
       const t = clamp(((p.x - w.ax) * vx + (p.z - w.az) * vz) / (vx * vx + vz * vz || 1), 0, 1);

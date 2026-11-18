@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import type { MapData } from "../maps/types";
+import { debug, type DebugTag } from "./DebugInspector";
 import { useHallEnvMapAt } from "./Environment";
 import type { ViewMode } from "./walk";
 
@@ -39,8 +40,9 @@ const fromSeg = (s: Seg, m: number, t: number, y0: number, y1: number): Piece =>
   return { cx: ((s.a[0] + s.b[0]) / 2) * m, cz: ((s.a[1] + s.b[1]) / 2) * m, sx: Math.hypot(dx, dz), sz: t, y0, y1, angle: -Math.atan2(dz, dx) };
 };
 
-const instanced = (geometry: THREE.BufferGeometry, material: THREE.Material, pieces: Piece[]) => {
+const instanced = (geometry: THREE.BufferGeometry, material: THREE.Material, pieces: Piece[], tag: DebugTag) => {
   const mesh = new THREE.InstancedMesh(geometry, material, Math.max(pieces.length, 1));
+  Object.assign(mesh.userData, debug(tag).userData);
   mesh.count = pieces.length;
   // Scenery: clicks pass through to the booths, and 2000+ instances stay out of every pointer raycast.
   mesh.raycast = () => {};
@@ -77,21 +79,29 @@ export const BuildingDetails = ({ data, mode }: Props) => {
     const cyl = new THREE.CylinderGeometry(0.5, 0.5, 1, 20);
     const std = (color: string, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.8, ...extra });
     const metal = (color: string, metalness: number, roughness = 0.8) => std(color, { metalness, roughness, envMap });
-    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, pieces: Piece[]) => {
-      if (pieces.length) g.add(instanced(geometry, material, pieces));
+    // `path` is the data.structure.details list; `idx` maps an instance back to its index in it when the list was filtered.
+    const add = (geometry: THREE.BufferGeometry, material: THREE.Material, pieces: Piece[], what: string, path: string, note?: string, idx?: number[]) => {
+      if (pieces.length)
+        g.add(instanced(geometry, material, pieces, { what, source: "CAD", ref: ({ instanceId }) => `structure.details.${path}[${instanceId === undefined ? "?" : (idx?.[instanceId] ?? instanceId)}]`, component: "BuildingDetails.tsx", note }));
     };
-    add(box, std("#b8bdc4"), d.columns.filter((c) => !c.round).map((c) => fromBox(c.r, m, 0, ceiling)));
-    add(cyl, std("#b8bdc4"), d.columns.filter((c) => c.round).map((c) => fromBox(c.r, m, 0, ceiling)));
-    add(box, std("#d8d4cc"), d.innerWalls.map((s) => fromSeg(s, m, INNER_WALL_T_M, 0, BAND_WALL_M)));
-    add(box, std("#8e939a"), d.stairs.map((r) => fromBox(r, m, 0, 0.02)));
-    add(box, std("#a7abb1"), d.stairSteps.map((t) => fromBox(t.r, m, 0, t.topM)));
-    add(box, metal("#7b828a", 0.6, 0.4), d.elevators.map((r) => fromBox(r, m, 0, BAND_WALL_M)));
+    const indexed = <T,>(list: T[], keep: (x: T) => boolean) => {
+      const idx = list.flatMap((x, i) => (keep(x) ? [i] : []));
+      return { items: idx.map((i) => list[i]), idx };
+    };
+    const sq = indexed(d.columns, (c) => !c.round);
+    const rd = indexed(d.columns, (c) => !!c.round);
+    add(box, std("#b8bdc4"), sq.items.map((c) => fromBox(c.r, m, 0, ceiling)), "기둥", "columns", undefined, sq.idx);
+    add(cyl, std("#b8bdc4"), rd.items.map((c) => fromBox(c.r, m, 0, ceiling)), "기둥 (원형)", "columns", undefined, rd.idx);
+    add(box, std("#e4e4e4"), d.innerWalls.map((s) => fromSeg(s, m, INNER_WALL_T_M, 0, BAND_WALL_M)), "실내 벽 (서비스 구역)", "innerWalls", "height 4.5 m, thickness 0.1 m are 임의");
+    add(box, std("#8e939a"), d.stairs.map((r) => fromBox(r, m, 0, 0.02)), "계단 바닥면", "stairs", "0.02 m slab is 임의");
+    add(box, std("#a7abb1"), d.stairSteps.map((t) => fromBox(t.r, m, 0, t.topM)), "계단", "stairSteps");
+    add(box, metal("#7b828a", 0.6, 0.4), d.elevators.map((r) => fromBox(r, m, 0, BAND_WALL_M)), "엘리베이터", "elevators", "height 4.5 m is 임의");
     const glass = new THREE.MeshStandardMaterial({ color: "#a9cfe0", transparent: true, opacity: 0.28, roughness: 0.1, metalness: 0.1, envMap, depthWrite: false });
-    add(box, glass, d.glazing.map((s) => fromSeg(s, m, 0.03, 0, GLAZING_TOP_M)));
-    add(box, metal("#5b6168", 0.5, 0.4), d.mullions.map((r) => fromBox(r, m, 0, GLAZING_TOP_M)));
-    add(box, std("#b3261e"), d.hydrants.map((r) => fromBox(r, m, ...HYDRANT_Y_M)));
-    add(box, metal("#696e75", 0.4), d.shutters.map((s) => fromSeg(s, m, 0.3, ...SHUTTER_Y_M)));
-    add(box, metal("#454a50", 0.6, 0.35), d.handrails.map((s) => fromSeg(s, m, 0.05, ...HANDRAIL_Y_M)));
+    add(box, glass, d.glazing.map((s) => fromSeg(s, m, 0.03, 0, GLAZING_TOP_M)), "유리벽", "glazing", "height 3.2 m, thickness 0.03 m are 임의");
+    add(box, metal("#5b6168", 0.5, 0.4), d.mullions.map((r) => fromBox(r, m, 0, GLAZING_TOP_M)), "멀리언 (유리 프레임)", "mullions", "height 3.2 m is 임의");
+    add(box, std("#b3261e"), d.hydrants.map((r) => fromBox(r, m, ...HYDRANT_Y_M)), "소화전", "hydrants", "y 0.2-1.7 m is 임의");
+    add(box, metal("#696e75", 0.4), d.shutters.map((s) => fromSeg(s, m, 0.3, ...SHUTTER_Y_M)), "셔터", "shutters", "y 3.6-4.0 m, depth 0.3 m are 임의");
+    add(box, metal("#454a50", 0.6, 0.35), d.handrails.map((s) => fromSeg(s, m, 0.05, ...HANDRAIL_Y_M)), "난간", "handrails", "y 0.85-0.9 m is 임의");
     return g;
   }, [d, m, ceiling, envMap]);
   useEffect(

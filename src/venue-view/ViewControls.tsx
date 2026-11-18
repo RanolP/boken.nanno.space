@@ -1,5 +1,6 @@
 import { useEffect, type PointerEvent } from "react";
 import type { MoveInput, MoveKey, ViewMode } from "./walk";
+import { useNearDoor, usePointerLocked } from "./roadInteract";
 
 interface ViewToggleProps {
   view: ViewMode;
@@ -22,6 +23,19 @@ export const ViewToggle = ({ view, onChange }: ViewToggleProps) => (
     <span className="hint">WASD 이동 · V 전환</span>
   </div>
 );
+
+/** Road-view HUD: centre dot while the mouse is captured, and the one-line hints for the door key and the mouse lock. */
+export const RoadHud = () => {
+  const locked = usePointerLocked();
+  const door = useNearDoor();
+  return (
+    <>
+      {locked && <div className="road-dot" aria-hidden />}
+      {door !== null && <span className="hint road-hint">E: 문 열기/닫기</span>}
+      {!locked && door === null && <span className="hint road-hint">클릭: 마우스 잠금 · Esc: 해제</span>}
+    </>
+  );
+};
 
 /** Hold-to-walk buttons for touch screens, which have no WASD; CSS shows it only for coarse pointers. */
 export const MovePad = ({ input }: MovePadProps) => {

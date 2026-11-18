@@ -992,7 +992,8 @@
    ],
    "side": "lobby",
    "kind": "door",
-   "widthM": 2.0
+   "widthM": 2.0,
+   "heightM": 3
   },
   {
    "a": [

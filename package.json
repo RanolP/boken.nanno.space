@@ -7,6 +7,7 @@
     "preview": "vite preview",
     "font": "scripts/subset-font.sh",
     "logos": "node scripts/fetch-logos.mjs && npm run logos:bg",
+    "exhibitors": "node scripts/fetch-exhibitor-info.mjs",
     "logos:bg": "uv run --with pillow --with numpy --with scipy python scripts/remove-logo-bg.py",
     "markers": "uv run --with pillow==13.0.0 --with numpy==2.5.5 --with scipy==1.18.1 python scripts/crop-markers.py scripts/agf-2026-markers.json",
     "structure": "scripts/kintex-structure.sh",

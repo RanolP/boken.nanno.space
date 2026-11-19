@@ -29,6 +29,14 @@ export type MapData = {
     exhibitor?: { ko: string; en?: string };
     /** Public path of the exhibitor logo, written by `npm run logos`. */
     logo?: string;
+    /** Exhibitor's own intro (official `promotionCopy`), written by `npm run exhibitors`. */
+    intro?: string;
+    /** Exhibitor homepage URL from the same official list, written by `npm run exhibitors`. */
+    homepage?: string;
+    /** Official X handle (no @), found from the exhibitor's homepage link or a verified bio. */
+    xAccount?: string;
+    /** The exhibitor's own X posts about its AGF booth, newest first. */
+    notices?: { url: string; date?: string; summary: string }[];
   }[];
   areas: {
     id: string;

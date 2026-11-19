@@ -80,7 +80,7 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }:
       {view === "drone" ? (
         <DroneRig data={data} flyKey={flyKey} selected={selected} input={input} pose={pose} />
       ) : (
-        <RoadRig data={data} booths={booths} flyKey={flyKey} selected={selected} input={input} pose={pose} />
+        <RoadRig data={data} booths={booths} flyKey={flyKey} selected={selected} input={input} pose={pose} onSelect={onSelect} />
       )}
     </Canvas>
   );

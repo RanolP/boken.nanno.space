@@ -58,6 +58,8 @@ const subscribe = (f: () => void) => {
 };
 let near: number | null = null;
 let locked = false;
+/** Booth code under the road-view crosshair (pointer locked only); drives the booth probe HUD and the aim outline. */
+let aimBooth: string | null = null;
 
 export const setNearDoor = (i: number | null) => {
   if (i === near) return;
@@ -69,6 +71,13 @@ export const setPointerLocked = (v: boolean) => {
   locked = v;
   subs.forEach((f) => f());
 };
+export const setAimBooth = (code: string | null) => {
+  if (code === aimBooth) return;
+  aimBooth = code;
+  subs.forEach((f) => f());
+};
+export const getAimBooth = () => aimBooth;
+export const useAimBooth = () => useSyncExternalStore(subscribe, () => aimBooth);
 export const getNearDoor = () => near;
 export const useNearDoor = () => useSyncExternalStore(subscribe, () => near);
 export const usePointerLocked = () => useSyncExternalStore(subscribe, () => locked);

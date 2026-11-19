@@ -7,7 +7,7 @@ import { Panel } from "./booth-finder/Panel";
 import { Search } from "./booth-finder/Search";
 import { Legend } from "./booth-finder/Legend";
 import { DebugHud } from "./venue-view/DebugInspector";
-import { MovePad, RoadHud, ViewToggle } from "./venue-view/ViewControls";
+import { BoothProbe, MovePad, RoadHud, ViewToggle } from "./venue-view/ViewControls";
 import { isTypingTarget, useMoveKeys, type MoveInput, type ViewMode } from "./venue-view/walk";
 
 export const App = () => {
@@ -49,6 +49,13 @@ const MapView = ({ entry }: MapViewProps) => {
     [data.booths, hidden],
   );
   const selectedBooth = data.booths.find((b) => b.code === selected) ?? null;
+  // The card stays mounted after a close until its exit animation (the entrance played in reverse) ends.
+  const [shownCode, setShownCode] = useState<string | null>(selected);
+  useEffect(() => {
+    if (selected !== null) setShownCode(selected);
+  }, [selected]);
+  const shownBooth = selectedBooth ?? data.booths.find((b) => b.code === shownCode) ?? null;
+  const closing = selectedBooth === null && shownBooth !== null;
 
   const toggle = (cat: string) =>
     setHidden((h) => {
@@ -102,11 +109,16 @@ const MapView = ({ entry }: MapViewProps) => {
         </div>
         {view === "road" && <MovePad input={input} />}
         {view === "road" && <DebugHud />}
-        {view === "road" && <RoadHud />}
-        {selectedBooth && (
+        {view === "road" && <RoadHud panelOpen={selectedBooth !== null} />}
+        {view === "road" && <BoothProbe data={data} />}
+        {view === "road" && shownBooth && <div className={closing ? "panel-dim closing" : "panel-dim"} aria-hidden />}
+        {shownBooth && (
           <Panel
-            booth={selectedBooth}
-            category={data.categories[selectedBooth.category]}
+            key={shownBooth.code}
+            booth={shownBooth}
+            closing={closing}
+            onClosed={() => setShownCode(null)}
+            category={data.categories[shownBooth.category]}
             showsLogoCredit={meta.showsExhibitorLogos}
             onClose={() => setSelected(null)}
           />

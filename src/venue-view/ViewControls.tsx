@@ -1,6 +1,7 @@
 import { useEffect, type PointerEvent } from "react";
 import type { MoveInput, MoveKey, ViewMode } from "./walk";
-import { useNearDoor, usePointerLocked } from "./roadInteract";
+import { useAimBooth, useNearDoor, usePointerLocked } from "./roadInteract";
+import type { MapData } from "../maps/types";
 
 interface ViewToggleProps {
   view: ViewMode;
@@ -25,15 +26,52 @@ export const ViewToggle = ({ view, onChange }: ViewToggleProps) => (
 );
 
 /** Road-view HUD: centre dot while the mouse is captured, and the one-line hints for the door key and the mouse lock. */
-export const RoadHud = () => {
+interface RoadHudProps {
+  /** The booth panel is open: walking is off until a right click closes it. */
+  panelOpen: boolean;
+}
+
+export const RoadHud = ({ panelOpen }: RoadHudProps) => {
   const locked = usePointerLocked();
   const door = useNearDoor();
   return (
     <>
       {locked && <div className="road-dot" aria-hidden />}
-      {door !== null && <span className="hint road-hint">E: 문 열기/닫기</span>}
-      {!locked && door === null && <span className="hint road-hint">클릭: 마우스 잠금 · Esc: 해제</span>}
+      {panelOpen && <span className="hint road-hint">우클릭: 닫기</span>}
+      {!panelOpen && door !== null && <span className="hint road-hint">E: 문 열기/닫기</span>}
+      {!panelOpen && door === null && <span className="hint road-hint">{locked ? "클릭: 바라보는 바닥으로 이동 · Space: 점프 · Esc: 해제" : "클릭: 마우스 잠금 · Space: 점프 · Esc: 해제"}</span>}
     </>
+  );
+};
+
+interface BoothProbeProps {
+  data: MapData;
+}
+
+/** Road view, top centre: the booth under the crosshair (category, code, exhibitor, logo), like a block-info tooltip. */
+export const BoothProbe = ({ data }: BoothProbeProps) => {
+  const code = useAimBooth();
+  const b = code === null ? undefined : data.booths.find((x) => x.code === code);
+  if (!b) return null;
+  const cat = data.categories[b.category];
+  return (
+    <div className="booth-probe" aria-live="polite">
+      {b.logo && <img src={b.logo} alt="" />}
+      <div>
+        <strong>{b.exhibitor?.ko ?? b.code}</strong>
+        {b.exhibitor?.en && b.exhibitor.en !== b.exhibitor.ko && <span className="en">{b.exhibitor.en}</span>}
+        <span className="meta">
+          <span className="code">{b.code}</span>
+          {cat && (
+            <span className="cat">
+              <i style={{ background: cat.color }} />
+              {cat.label}
+            </span>
+          )}
+          <span className="click">클릭: 상세 보기</span>
+        </span>
+      </div>
+    </div>
   );
 };
 

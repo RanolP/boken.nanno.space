@@ -4,6 +4,7 @@ import { Edges } from "@react-three/drei";
 import * as THREE from "three";
 import type { MapData } from "../maps/types";
 import { debug } from "./DebugInspector";
+import { useAimBooth } from "./roadInteract";
 import { faceWalker } from "./labelFit";
 import { INK_DARK, INK_LIGHT, WALLS, inkOn, logoPlate, logoSamples, type Ink } from "./contrast";
 import { POST_M, boothPosts, rectOf, type ViewMode } from "./walk";
@@ -71,6 +72,8 @@ export const Booths = ({ data, booths, selected, view, onSelect }: BoothsProps) 
   const font = useLabelFont();
   const logos = useLogoImages(data.booths);
   const sel = booths.find((b) => b.code === selected);
+  const aimCode = useAimBooth();
+  const aimed = view === "road" ? booths.find((b) => b.code === aimCode) : undefined;
   /** Pick handler mapping a hit triangle or instance to its booth. */
   const pick = (boothOf: (e: ThreeEvent<MouseEvent>) => number | null) => (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
@@ -86,23 +89,33 @@ export const Booths = ({ data, booths, selected, view, onSelect }: BoothsProps) 
       ) : (
         <DroneBooths data={data} booths={booths} font={font} logos={logos} pick={pick} />
       )}
-      {sel && (
-        <mesh
-          position={[(sel.x + sel.w / 2) * m, BOOTH_H / 2 + 0.15, (sel.y + sel.h / 2) * m]}
-          scale={[sel.w * m + 0.4, BOOTH_H + 0.3, sel.h * m + 0.4]}
-          renderOrder={1}
-          raycast={NO_RAYCAST}
-          {...debug({ what: "선택 하이라이트", source: "임의", ref: `booth ${sel.code}`, component: "BoothFrame.tsx (Booths)" })}
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          {/* Road view stands close enough that the tinted box fills the screen like a veil: outline only there. */}
-          <meshBasicMaterial color="#ffe14d" transparent opacity={0.3} depthWrite={false} visible={view === "drone"} />
-          <Edges color="#d49b00" />
-        </mesh>
-      )}
+      {sel && <Highlight booth={sel} m={m} view={view} />}
+      {/* Road view: the booth under the crosshair gets the same outline, so aiming reads as picking it. */}
+      {aimed && aimed !== sel && <Highlight booth={aimed} m={m} view={view} />}
     </>
   );
 };
+
+interface HighlightProps {
+  booth: Booth;
+  m: number;
+  view: ViewMode;
+}
+
+const Highlight = ({ booth: sel, m, view }: HighlightProps) => (
+  <mesh
+    position={[(sel.x + sel.w / 2) * m, BOOTH_H / 2 + 0.15, (sel.y + sel.h / 2) * m]}
+    scale={[sel.w * m + 0.4, BOOTH_H + 0.3, sel.h * m + 0.4]}
+    renderOrder={1}
+    raycast={NO_RAYCAST}
+    {...debug({ what: "선택 하이라이트", source: "임의", ref: `booth ${sel.code}`, component: "BoothFrame.tsx (Booths)" })}
+  >
+    <boxGeometry args={[1, 1, 1]} />
+    {/* Road view stands close enough that the tinted box fills the screen like a veil: outline only there. */}
+    <meshBasicMaterial color="#ffe14d" transparent opacity={0.3} depthWrite={false} visible={view === "drone"} />
+    <Edges color="#d49b00" />
+  </mesh>
+);
 
 type Pick = (boothOf: (e: ThreeEvent<MouseEvent>) => number | null) => (e: ThreeEvent<MouseEvent>) => void;
 interface PartProps {

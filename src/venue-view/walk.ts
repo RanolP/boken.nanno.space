@@ -274,11 +274,74 @@ const isFree = (x: number, z: number, obs: Obstacles, W: number, D: number) => {
   x <= W - WALKER_R &&
   z <= D - WALKER_R &&
   rects.every((r) => Math.hypot(x - clamp(x, r.x0, r.x1), z - clamp(z, r.z0, r.z1)) >= WALKER_R) &&
-  walls.every((w) => segDist(x, z, w) >= WALKER_R + w.r) &&
+  walls.every((w) => (w.idx !== undefined && openDoors.has(w.idx)) || segDist(x, z, w) >= WALKER_R + w.r) &&
   (near?.rects.every((r) => Math.hypot(x - clamp(x, r.x0, r.x1), z - clamp(z, r.z0, r.z1)) >= WALKER_R) ?? true) &&
   (near?.walls.every((w) => segDist(x, z, w) >= WALKER_R + w.r) ?? true)
   );
 };
+
+/** Farthest a click-teleport reaches when the view never meets the floor (looking level or up). */
+const TELEPORT_MAX_M = 60;
+const TELEPORT_STEP_M = 0.1;
+
+/**
+ * Click-to-teleport target: the floor point the view ray meets (eye at `eyeH`), reached by marching from the walker
+ * along the view heading and stopping at the last spot the walker fits, so a wall, column or closed door in between
+ * lands you just in front of it instead of past it. Null when the very first step is blocked.
+ */
+export const lookFloorSpot = (p: { x: number; z: number }, yaw: number, pitch: number, eyeH: number, obs: Obstacles, W: number, D: number) => {
+  const reach = pitch < 0 ? Math.min(TELEPORT_MAX_M, eyeH / Math.tan(-pitch)) : TELEPORT_MAX_M;
+  const d = freeRun(p, yaw, reach, obs, W, D);
+  return d > 0 ? { x: p.x - Math.sin(yaw) * d, z: p.z - Math.cos(yaw) * d } : null;
+};
+
+/** How far (m, in TELEPORT_STEP_M steps) the walker fits along heading `yaw` before something blocks it, up to `reach`. */
+export const freeRun = (p: { x: number; z: number }, yaw: number, reach: number, obs: Obstacles, W: number, D: number) => {
+  const dx = -Math.sin(yaw);
+  const dz = -Math.cos(yaw);
+  let last = 0;
+  for (let d = TELEPORT_STEP_M; d <= reach; d += TELEPORT_STEP_M) {
+    if (!isFree(p.x + dx * d, p.z + dz * d, obs, W, D)) break;
+    last = d;
+  }
+  return last;
+};
+
+/**
+ * Index into `obs.booths` of the booth the view ray (eye at `eyeH`) meets first, as a `boothH`-tall box, before the
+ * floor; null when none, or when a wall stops the walker well short of it (the booth is behind that wall).
+ */
+export const lookBooth = (p: { x: number; z: number }, yaw: number, pitch: number, eyeH: number, boothH: number, obs: Obstacles, W: number, D: number) => {
+  const c = Math.cos(pitch);
+  const dir = [-Math.sin(yaw) * c, Math.sin(pitch), -Math.cos(yaw) * c];
+  const o = [p.x, eyeH, p.z];
+  let tMax = pitch < 0 ? eyeH / -dir[1] : Infinity;
+  let best: number | null = null;
+  obs.booths.forEach((r, i) => {
+    const lo = [r.x0, 0, r.z0];
+    const hi = [r.x1, boothH, r.z1];
+    let t0 = 0;
+    let t1 = tMax;
+    for (let k = 0; k < 3; k++) {
+      if (Math.abs(dir[k]) < 1e-9) {
+        if (o[k] < lo[k] || o[k] > hi[k]) return;
+        continue;
+      }
+      const a = (lo[k] - o[k]) / dir[k];
+      const b = (hi[k] - o[k]) / dir[k];
+      t0 = Math.max(t0, Math.min(a, b));
+      t1 = Math.min(t1, Math.max(a, b));
+      if (t0 > t1) return;
+    }
+    tMax = t0;
+    best = i;
+  });
+  if (best === null) return null;
+  // Occlusion: the walker must get to within LOOK_BOOTH_SLACK_M of the booth's face (its own corner posts block a bit early).
+  const flat = tMax * c;
+  return freeRun(p, yaw, flat, obs, W, D) >= flat - LOOK_BOOTH_SLACK_M ? best : null;
+};
+const LOOK_BOOTH_SLACK_M = 1;
 
 const segDist = (x: number, z: number, w: Wall) => {
   const vx = w.bx - w.ax;

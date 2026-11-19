@@ -211,8 +211,40 @@ body { background: var(--bg); color: var(--fg); }
 .segmented button { padding: 6px 10px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 13px; cursor: pointer; color: var(--fg); white-space: nowrap; }
 .segmented button[aria-pressed="true"] { background: var(--fg); color: #fff; }
 .hint { padding: 2px 6px; border-radius: 4px; background: #fffe; font-size: 12px; color: var(--muted); }
-.road-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); pointer-events: none; }
-.booth-probe { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; max-width: min(520px, calc(100% - 24px)); padding: 8px 12px; border-radius: 6px; background: #14161ce6; color: #fff; box-shadow: 0 0 0 1px #5b4fd6, 0 4px 12px #0004; pointer-events: none; }
+.road-help { padding: 20px 25px; border: 0; border-radius: 6px; background: #14161ce6; color: #fff; box-shadow: 0 0 0 1px #5b4fd6, 0 4px 12px #0004; font-size: 14px; word-break: keep-all; }
+.road-help::backdrop { background: #0006; }
+.road-help-main { display: flex; align-items: center; gap: 16px; }
+.road-help .look { flex: none; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.road-help .look-wedge, .road-help .look-mouse, .road-help .look-pan { animation: 3s ease-in-out infinite alternate; }
+.road-help .look-wedge { transform-origin: 48px 108px; animation-name: look-turn; }
+.road-help .look .look-band { fill: none; stroke: url(#look-band); stroke-width: 5; stroke-linecap: butt; }
+.road-help .look-wedge .wf { stroke: none; }
+.road-help .look-wedge .wl { fill: none; }
+.road-help .look-wedge path { fill: #3b5bdb55; stroke: #8fa4ff; }
+.road-help .look-screen-bg { fill: #e2e8f0; }
+.road-help .look-motif .pk { fill: #f472b6; stroke: none; }
+.road-help .look-motif .nv { fill: #1e3a8a; stroke: none; }
+.road-help .look-pan { animation-name: look-pan; }
+.road-help .look circle { fill: #3b5bdb; stroke: #8fa4ff; }
+.road-help .look-mouse { animation-name: look-slide; }
+@keyframes look-turn { from { transform: rotate(-35deg); } to { transform: rotate(35deg); } }
+@keyframes look-slide { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
+@keyframes look-pan { from { transform: translateX(39px); } to { transform: translateX(-39px); } }
+@media (prefers-reduced-motion: reduce) { .road-help .look-wedge, .road-help .look-mouse, .road-help .look-pan { animation: none; } }
+.road-help .kb { position: relative; width: calc(12.2 * var(--u)); height: calc(6 * var(--u) + 32px); margin-bottom: 14px; }
+.road-help kbd, .road-help .kb span { position: absolute; height: calc(var(--u) - 4px); line-height: calc(var(--u) - 4px); box-sizing: border-box; }
+.road-help kbd { border: 1px solid #5b6070; border-bottom-width: 3px; border-radius: 5px; background: #2a2d38; font: inherit; font-size: 12px; text-align: center; line-height: calc(var(--u) - 8px); }
+.road-help .kb-outline { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.road-help .kb-outline path { fill: none; stroke: #fff; stroke-width: 1px; }
+.road-help .co { position: absolute; box-sizing: border-box; border: 0 dashed currentColor; }
+.road-help .co-left { border-top-width: 1px; }
+.road-help .co-down { border-left-width: 1px; }
+.road-help kbd.used { border-color: #8fa4ff; background: #3b5bdb; color: #fff; }
+.road-help .kb span { font-size: 12px; white-space: nowrap; }
+.road-help label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #aab0bc; }
+.road-help button { display: block; width: 100%; margin-top: 12px; padding: 6px 0; border: 0; border-radius: 4px; background: #5b4fd6; color: #fff; font: inherit; cursor: pointer; }
+/* User: "상단에 뜨는 WAILA가 그 LMB 아래쪽에 붙게 이동": under .road-tp-hint (top 16px below the crosshair, 18px tall), left-aligned with it. */
+.booth-probe { position: absolute; left: calc(50% + 16px); top: calc(50% + 40px); display: flex; gap: 10px; align-items: center; max-width: min(520px, calc(100% - 24px)); padding: 8px 12px; border-radius: 6px; background: #14161ce6; color: #fff; box-shadow: 0 0 0 1px #5b4fd6, 0 4px 12px #0004; pointer-events: none; }
 .booth-probe img { width: 40px; height: 40px; object-fit: contain; border-radius: 4px; background: #fff; flex: none; }
 .booth-probe strong { display: block; font-size: 15px; line-height: 1.25; }
 .booth-probe .en { display: block; font-size: 12px; color: #c9cdd6; }
@@ -220,8 +252,10 @@ body { background: var(--bg); color: var(--fg); }
 .booth-probe .code { color: #ffe14d; font-weight: 600; }
 .booth-probe .cat { display: inline-flex; align-items: center; gap: 4px; }
 .booth-probe .cat i { width: 8px; height: 8px; border-radius: 2px; }
-.booth-probe .click { color: #7f8696; }
+.road-tp-hint { position: absolute; left: calc(50% + 16px); top: calc(50% + 16px); display: flex; align-items: center; gap: 4px; pointer-events: none; color: #fff; font-size: 12px; word-break: keep-all; white-space: nowrap; text-shadow: 0 0 2px #000, 0 0 4px #000a; }
+.road-tp-hint svg { flex: none; fill: #fff; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .road-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; pointer-events: none; background: #fff; box-shadow: 0 0 0 1px #000a; }
+.road-donut { width: 16px; height: 16px; margin: -8px 0 0 -8px; background: none; border: 2px solid #fff; box-sizing: border-box; box-shadow: 0 0 0 1px #000a, inset 0 0 0 1px #000a; }
 .move-pad { display: none; position: absolute; left: 12px; bottom: 12px; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 4px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .move-pad button { border: 1px solid var(--line); border-radius: 12px; background: #fffd; font-size: 18px; color: var(--fg); touch-action: none; }
 .move-pad button:active { background: #dfe4ec; }

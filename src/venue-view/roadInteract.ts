@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from "react";
+import type { Object3D } from "three";
+import type { StageId } from "../maps/types";
 
 /**
  * Road-view interaction state shared by the 3D scene and the DOM HUD: which exit doors are open (and their swing
- * animation), which door is in reach of the walker, and whether the mouse is captured (pointer lock).
+ * animation), which door the crosshair looks at, and whether the mouse is captured (pointer lock).
  */
 
 /** Wall index (structure.walls[i]) of every exit door that is open. Read by `collide`: an open door no longer blocks. */
@@ -10,7 +12,7 @@ export const openDoors = new Set<number>();
 
 export const DOOR_SWING_RAD = Math.PI / 2;
 const DOOR_SWING_S = 0.6;
-/** E opens the nearest door whose centre is within this many metres of the walker. */
+/** User: "문 바라볼 땐 LMB 문 열기/문 닫기": a door leaf the crosshair ray hits within this many metres of the eye can be toggled. */
 export const DOOR_REACH_M = 3;
 
 type Anim = { from: number; to: number; t0: number };
@@ -30,40 +32,26 @@ export const toggleDoor = (i: number) => {
   anims.set(i, { from: doorProgress(i), to, t0: now() });
   if (to) openDoors.add(i);
   else openDoors.delete(i);
+  subs.forEach((f) => f());
 };
 
-/** Door centres in world metres, registered by Building while it draws them (road view only). */
-let spots: { i: number; x: number; z: number }[] = [];
-export const registerDoors = (s: typeof spots) => {
-  spots = s;
-};
-
-export const nearestDoor = (x: number, z: number) => {
-  let best: number | null = null;
-  let bd = DOOR_REACH_M;
-  for (const s of spots) {
-    const d = Math.hypot(s.x - x, s.z - z);
-    if (d <= bd) {
-      bd = d;
-      best = s.i;
-    }
-  }
-  return best;
-};
+/** Swing groups of every drawn door leaf (road view only), tagged with their door id; RoadRig raycasts them for the door aim. */
+export const doorLeaves = new Set<{ object: Object3D; i: number }>();
 
 const subs = new Set<() => void>();
 const subscribe = (f: () => void) => {
   subs.add(f);
   return () => void subs.delete(f);
 };
-let near: number | null = null;
+/** Door id under the road-view crosshair (pointer locked only); a left click toggles it instead of teleporting. */
+let aimDoor: number | null = null;
 let locked = false;
 /** Booth code under the road-view crosshair (pointer locked only); drives the booth probe HUD and the aim outline. */
 let aimBooth: string | null = null;
 
-export const setNearDoor = (i: number | null) => {
-  if (i === near) return;
-  near = i;
+export const setAimDoor = (i: number | null) => {
+  if (i === aimDoor) return;
+  aimDoor = i;
   subs.forEach((f) => f());
 };
 export const setPointerLocked = (v: boolean) => {
@@ -76,8 +64,25 @@ export const setAimBooth = (code: string | null) => {
   aimBooth = code;
   subs.forEach((f) => f());
 };
+/** The floor ring is shown, so a left click teleports (RoadRig's `teleportSpot` result); drives the HUD crosshair shape. */
+let teleportable = false;
+export const setTeleportable = (v: boolean) => {
+  if (v === teleportable) return;
+  teleportable = v;
+  subs.forEach((f) => f());
+};
+export const useTeleportable = () => useSyncExternalStore(subscribe, () => teleportable);
+/** RED/BLUE STAGE under the road-view crosshair (pointer locked only); drives the crosshair hint like a booth. */
+let aimStage: StageId | null = null;
+export const setAimStage = (s: StageId | null) => {
+  if (s === aimStage) return;
+  aimStage = s;
+  subs.forEach((f) => f());
+};
+export const useAimStage = () => useSyncExternalStore(subscribe, () => aimStage);
 export const getAimBooth = () => aimBooth;
 export const useAimBooth = () => useSyncExternalStore(subscribe, () => aimBooth);
-export const getNearDoor = () => near;
-export const useNearDoor = () => useSyncExternalStore(subscribe, () => near);
+export const getAimDoor = () => aimDoor;
+/** null = no door aimed, else whether the aimed door is open (the HUD says 문 닫기 / 문 열기). */
+export const useAimDoorOpen = () => useSyncExternalStore(subscribe, () => (aimDoor === null ? null : openDoors.has(aimDoor)));
 export const usePointerLocked = () => useSyncExternalStore(subscribe, () => locked);

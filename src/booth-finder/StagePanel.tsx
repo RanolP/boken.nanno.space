@@ -15,7 +15,7 @@ const loadOnce = (load: LoadStages) => {
   return p;
 };
 
-const STAGE: Record<StageId, { title: string; color: string; official: string }> = {
+export const STAGE: Record<StageId, { title: string; color: string; official: string }> = {
   red: { title: "RED STAGE", color: "#d22f6e", official: "https://www.agfkorea.com/stage?idx=1" },
   blue: { title: "BLUE STAGE", color: "#1f74b8", official: "https://www.agfkorea.com/stage?idx=2" },
 };

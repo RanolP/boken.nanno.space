@@ -5,7 +5,7 @@ import type { MapData } from "../maps/types";
 import type { ViewMode } from "./walk";
 import { CAD_ONLY } from "./HallInterior";
 import { debug } from "./DebugInspector";
-import { DOOR_SWING_RAD, doorProgress, registerDoors } from "./roadInteract";
+import { DOOR_SWING_RAD, doorLeaves, doorProgress } from "./roadInteract";
 import { HALL_DOOR_IDX_BASE, HALL_DOOR_OPENINGS, SHUTTER_OPENINGS } from "./walk";
 
 interface Props {
@@ -174,6 +174,11 @@ const HANDLE_STRUT_AT = [1 / 3, 2 / 3] as const;
 /** Leaf pivot: origin on the hinge axis; rotates about Y by the door's shared swing progress (both leaves mirrored via `sign`). */
 const SwingPivot = ({ i, sign, position, children }: { i: number; sign: number; position: [number, number, number]; children: ReactNode }) => {
   const ref = useRef<THREE.Group>(null);
+  useEffect(() => {
+    const leaf = { object: ref.current!, i };
+    doorLeaves.add(leaf);
+    return () => void doorLeaves.delete(leaf);
+  }, [i]);
   useFrame(() => {
     if (ref.current) ref.current.rotation.y = sign * DOOR_SWING_RAD * doorProgress(i);
   });
@@ -209,16 +214,6 @@ const HingeLink = ({ i, side, lz, axisX, t, h, tag, mat, box, cyl }: { i: number
       <mesh geometry={cyl} material={mat} position={[bx, yk, bz]} scale={[HINGE_KNOB_D_M, HINGE_KNOB_H_M, HINGE_KNOB_D_M]} {...tag} />
     </>
   );
-};
-
-/** Tells the E key where the doors are (world metres) while they are drawn. */
-const DoorSpots = ({ spots }: { spots: { i: number; x: number; z: number }[] }) => {
-  const key = spots.map((p) => p.i).join();
-  useEffect(() => {
-    registerDoors(spots);
-    return () => registerDoors([]);
-  }, [key]);
-  return null;
 };
 
 
@@ -1312,7 +1307,6 @@ export const Building = ({ data, mode }: Props) => {
           </group>
         );
       })}
-      <DoorSpots spots={doors.map((d) => ({ i: d.i, x: d.r.cx, z: d.r.cz }))} />
       {/* Road view bakes the partition tracks into the floor texture: a 2 cm box on the floor plane lost the depth
           test to the polygon-offset floor beyond a view-dependent distance, so the line came and went while walking. */}
       {drone && s.partitions.map((p, i) => {

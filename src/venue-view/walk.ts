@@ -113,7 +113,7 @@ export const moveAxes = (input: MoveInput) => ({
  * enters between them. Wall runs already stop at entrances, docks and doors, so those stay open; movable partitions
  * are floor seams, not walls.
  */
-/** User: openings[54], openings[55] on the hall-1 end wall are cargo entrances with the roll shutter down (closed, solid); openings[56..59] are hall doors (E toggles them).
+/** User: openings[54], openings[55] on the hall-1 end wall are cargo entrances with the roll shutter down (closed, solid); openings[56..59] are hall doors (a left click on the aimed door toggles them).
  * Building draws them; here they block the walker. A hall door's id in openDoors is HALL_DOOR_IDX_BASE + opening index (past every wall index). */
 export const SHUTTER_OPENINGS = new Set([54, 55]);
 export const HALL_DOOR_OPENINGS = new Set([56, 57, 58, 59]);

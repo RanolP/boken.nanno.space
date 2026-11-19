@@ -4,7 +4,7 @@ import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { stageKey, stageOfArea, type MapData, type StageId } from "../maps/types";
 import { isTypingTarget, collide, freeSpotNear, lookBooth, lookFloorSpot, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
-import { getAimBooth, getNearDoor, nearestDoor, setAimBooth, setNearDoor, setPointerLocked, toggleDoor } from "./roadInteract";
+import { DOOR_REACH_M, doorLeaves, getAimBooth, getAimDoor, setAimBooth, setAimDoor, setAimStage, setPointerLocked, setTeleportable, toggleDoor } from "./roadInteract";
 import { BOOTH_H } from "./BoothFrame";
 
 type Booth = MapData["booths"][number];
@@ -223,6 +223,12 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     // Locked left press teleports to the floor spot the crosshair looks at (stops in front of whatever is in the way).
     // On pointerdown rather than click: some browsers do not deliver click while the pointer is locked.
     const teleport = () => {
+      // User: door aim wins over teleport; the click toggles the door pair instead.
+      const door = getAimDoor();
+      if (door !== null) {
+        toggleDoor(door);
+        return;
+      }
       const aimed = getAimBooth();
       if (aimed) {
         // Free the cursor so the card can be scrolled and its link clicked; looking is blocked while it is open anyway.
@@ -297,7 +303,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     };
   }, [gl, obstacles, onSelect]);
 
-  // E toggles the nearest exit door within reach (both leaves together).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
@@ -309,10 +314,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         j.pressedAt = performance.now() / 1000;
         return;
       }
-      if (e.repeat) return;
-      if (e.code !== "KeyE") return;
-      const i = getNearDoor();
-      if (i !== null) toggleDoor(i);
     };
     const onKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") jumpRef.current.held = false;
@@ -328,8 +329,10 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
-      setNearDoor(null);
+      setAimDoor(null);
+      setAimStage(null);
       setAimBooth(null);
+      setTeleportable(false);
     };
   }, []);
 
@@ -372,7 +375,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       jump.y += jump.vy * dt;
       if (jump.y <= 0) jump.y = jump.vy = 0;
     }
-    setNearDoor(nearestDoor(w.x, w.z));
     // View bob rides on the camera only; the walker/collision position stays untouched. Phase advances by the
     // distance actually covered after collision, so pushing into a wall does not bob.
     const dist = Math.hypot(w.x - x0, w.z - z0);
@@ -399,18 +401,38 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         ring.visible = false;
         mark.key = "";
         setAimBooth(null);
+        setAimDoor(null);
+        setAimStage(null);
+        setTeleportable(false);
         aimStage.current = null;
       } else if (key !== mark.key && mark.t >= TP_MARK_EVERY_S) {
         mark.key = key;
         mark.t = 0;
         const eye = devEye.current?.h ?? EYE_H;
         // Looking at a booth: no teleport marker; the booth gets the aim outline and the probe HUD instead.
-        const bi = lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, obstacles, W, D);
+        // A door leaf under the crosshair within reach beats booth, stage and teleport aim alike.
+        let di: number | null = null;
+        if (!panelOpen.current && doorLeaves.size) {
+          aimRay.set(camera.getWorldPosition(aimOrigin), camera.getWorldDirection(aimDir));
+          aimRay.far = DOOR_REACH_M;
+          let best = Infinity;
+          for (const leaf of doorLeaves) {
+            const hit = aimRay.intersectObject(leaf.object, true)[0];
+            if (hit && hit.distance < best) {
+              best = hit.distance;
+              di = leaf.i;
+            }
+          }
+        }
+        setAimDoor(di);
+        const bi = di !== null ? null : lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, obstacles, W, D);
         setAimBooth(bi === null ? null : (booths[bi]?.code ?? null));
-        const si = bi === null ? lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, stageAim.obs, W, D) : null;
+        const si = bi === null && di === null ? lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, stageAim.obs, W, D) : null;
         aimStage.current = si === null ? null : stageAim.ids[si];
-        const to = bi === null && si === null && !panelOpen.current ? teleportSpot(w, w.yaw, pitch.current, eye, obstacles, W, D) : null;
+        setAimStage(aimStage.current);
+        const to = bi === null && si === null && di === null && !panelOpen.current ? teleportSpot(w, w.yaw, pitch.current, eye, obstacles, W, D) : null;
         ring.visible = to !== null;
+        setTeleportable(to !== null);
         if (to) ring.position.set(to.x, TP_RING_Y, to.z);
       }
       // Past TP_SCALE_FROM_M the on-screen size (scale / distance) shrinks like 1 / (1 + ln(d / d0)) instead of 1 / d,
@@ -422,8 +444,8 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       // The pillar's height keeps a constant on-screen length past TP_PILLAR_FULL_FROM_M so it still clears booths when far.
       if (tpPillar.current) {
         tpPillar.current.scale.y = Math.max(s, (x * TP_SCALE_FROM_M) / TP_PILLAR_FULL_FROM_M) / s;
-        // A near target is already obvious from the ring; the pillar would just fill the view.
-        tpPillar.current.visible = x * TP_SCALE_FROM_M >= TP_PILLAR_HIDE_WITHIN_M;
+        // Same cut-off as the teleport itself, so a shown ring always carries its pillar.
+        tpPillar.current.visible = x * TP_SCALE_FROM_M >= TP_MIN_M;
       }
     }
   });
@@ -477,12 +499,14 @@ const TP_RING_TUBE = 0.04;
 const TP_RING_Y = 0.05;
 const TP_MARK_EVERY_S = 1 / 20;
 const TP_PILLAR_H = 3;
+const aimRay = new THREE.Raycaster();
+const aimOrigin = new THREE.Vector3();
+const aimDir = new THREE.Vector3();
 const TP_SCALE_FROM_M = 4;
 const TP_PILLAR_FULL_FROM_M = 8;
-// A floor spot nearer than this is walking distance: no marker and no teleport.
-const TP_MIN_M = 1.5;
-// Between TP_MIN_M and this, the ring shows without its light pillar.
-const TP_PILLAR_HIDE_WITHIN_M = 3;
+// User: "텔레포트 빛 사라질 때 그냥 불가 처리해버리자 로직 2개 짜친다": one cut-off. A floor spot nearer than this is
+// walking distance (and its light pillar would just fill the view): no marker, no pillar, no teleport.
+const TP_MIN_M = 3;
 const teleportSpot = (...args: Parameters<typeof lookFloorSpot>) => {
   const to = lookFloorSpot(...args);
   return to && Math.hypot(to.x - args[0].x, to.z - args[0].z) >= TP_MIN_M ? to : null;

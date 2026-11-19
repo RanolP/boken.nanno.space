@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, type ComponentRef, type Re
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
-import type { MapData } from "../maps/types";
+import { stageKey, stageOfArea, type MapData, type StageId } from "../maps/types";
 import { isTypingTarget, collide, freeSpotNear, lookBooth, lookFloorSpot, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
 import { getAimBooth, getNearDoor, nearestDoor, setAimBooth, setNearDoor, setPointerLocked, toggleDoor } from "./roadInteract";
 import { BOOTH_H } from "./BoothFrame";
@@ -130,6 +130,16 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
   const W = data.source.widthPx * m;
   const D = data.source.heightPx * m;
   const obstacles = useMemo(() => obstaclesOf(data, booths), [data, booths]);
+  // User: the RED/BLUE STAGE opens its timetable on a locked click too. Aimed with the booth ray (lookBooth) over the
+  // stage areas' boxes, up to booth height so looking at the performers above the deck counts.
+  const stageAim = useMemo(() => {
+    const at = data.areas.flatMap((a) => {
+      const s = stageOfArea(a);
+      return s ? [{ s, r: rectOf(a, m) }] : [];
+    });
+    return { ids: at.map((x) => x.s), obs: { ...obstacles, booths: at.map((x) => x.r) } };
+  }, [data, m, obstacles]);
+  const aimStage = useRef<StageId | null>(null);
   const walker = useRef<Pose>({ x: W / 2, z: D / 2, yaw: 0 });
   const pitch = useRef(0);
   const devEye = useRef<{ h: number; roll: number } | null>(null);
@@ -200,13 +210,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     const el = gl.domElement;
     let drag: { id: number; x: number; y: number } | null = null;
     const down = (e: PointerEvent) => {
-      if (e.pointerType === "mouse" && e.button === 2) {
-        if (!panelOpen.current) return;
-        onSelect(null);
-        // Back to mouse look; the right press is the user gesture requestPointerLock needs.
-        void el.requestPointerLock?.();
-        return;
-      }
       if (document.pointerLockElement === el && e.button === 0) {
         teleport();
         return;
@@ -227,6 +230,11 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         onSelect(aimed);
         return;
       }
+      if (aimStage.current) {
+        document.exitPointerLock();
+        onSelect(stageKey(aimStage.current));
+        return;
+      }
       if (panelOpen.current) return;
       const w = walker.current;
       const to = teleportSpot(w, w.yaw, pitch.current, devEye.current?.h ?? EYE_H, obstacles, W, D);
@@ -245,7 +253,8 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         e.stopPropagation();
         return;
       }
-      if (e.target !== el) return;
+      // Open card: the click that follows the opening press lands on the now-unlocked canvas and must not re-lock it.
+      if (e.target !== el || panelOpen.current) return;
       e.stopPropagation();
       void el.requestPointerLock?.();
     };
@@ -254,9 +263,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     };
     const lockChange = () => setPointerLocked(document.pointerLockElement === el);
     window.addEventListener("click", lockClick, true);
-    // Right click closes the panel; keep the browser menu off the canvas.
-    const noMenu = (e: MouseEvent) => e.preventDefault();
-    el.addEventListener("contextmenu", noMenu);
     window.addEventListener("mousemove", lockMove);
     document.addEventListener("pointerlockchange", lockChange);
     const move = (e: PointerEvent) => {
@@ -280,7 +286,6 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     window.addEventListener("pointercancel", up);
     return () => {
       window.removeEventListener("click", lockClick, true);
-      el.removeEventListener("contextmenu", noMenu);
       window.removeEventListener("mousemove", lockMove);
       document.removeEventListener("pointerlockchange", lockChange);
       if (document.pointerLockElement === el) document.exitPointerLock();
@@ -394,6 +399,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         ring.visible = false;
         mark.key = "";
         setAimBooth(null);
+        aimStage.current = null;
       } else if (key !== mark.key && mark.t >= TP_MARK_EVERY_S) {
         mark.key = key;
         mark.t = 0;
@@ -401,7 +407,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         // Looking at a booth: no teleport marker; the booth gets the aim outline and the probe HUD instead.
         const bi = lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, obstacles, W, D);
         setAimBooth(bi === null ? null : (booths[bi]?.code ?? null));
-        const to = bi === null && !panelOpen.current ? teleportSpot(w, w.yaw, pitch.current, eye, obstacles, W, D) : null;
+        const si = bi === null ? lookBooth(w, w.yaw, pitch.current, eye, BOOTH_H, stageAim.obs, W, D) : null;
+        aimStage.current = si === null ? null : stageAim.ids[si];
+        const to = bi === null && si === null && !panelOpen.current ? teleportSpot(w, w.yaw, pitch.current, eye, obstacles, W, D) : null;
         ring.visible = to !== null;
         if (to) ring.position.set(to.x, TP_RING_Y, to.z);
       }

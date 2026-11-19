@@ -37,7 +37,6 @@ export const RoadHud = ({ panelOpen }: RoadHudProps) => {
   return (
     <>
       {locked && <div className="road-dot" aria-hidden />}
-      {panelOpen && <span className="hint road-hint">우클릭: 닫기</span>}
       {!panelOpen && door !== null && <span className="hint road-hint">E: 문 열기/닫기</span>}
       {!panelOpen && door === null && <span className="hint road-hint">{locked ? "클릭: 바라보는 바닥으로 이동 · Space: 점프 · Esc: 해제" : "클릭: 마우스 잠금 · Space: 점프 · Esc: 해제"}</span>}
     </>

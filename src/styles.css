@@ -23,7 +23,7 @@ body { background: var(--bg); color: var(--fg); }
 .legend button { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font: inherit; font-size: 13px; cursor: pointer; color: var(--fg); }
 .legend button.off { opacity: .45; text-decoration: line-through; }
 .dot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
-.panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: panel-pop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both; width: min(560px, calc(100vw - 32px)); padding: 20px 24px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 16px #0002; }
+.panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); animation: panel-pop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both; width: min(960px, calc(100vw - 32px)); padding: 20px 24px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 16px #0002; }
 /* Entrance: a slight turn while it grows in from small, overshooting a little. */
 @keyframes panel-pop {
   from { transform: translate(-50%, -50%) rotate(-12deg) scale(0.2); opacity: 0; }
@@ -31,7 +31,7 @@ body { background: var(--bg); color: var(--fg); }
   to { transform: translate(-50%, -50%) rotate(0) scale(1); }
 }
 /* Road view: the scene dims behind the booth card; clicks pass through so a right click on the canvas closes it. */
-.panel-dim { position: absolute; inset: 0; background: #0009; pointer-events: none; animation: dim-in 0.3s ease both; }
+.panel-dim { position: absolute; inset: 0; background: #0009; animation: dim-in 0.3s ease both; }
 @keyframes dim-in { from { opacity: 0; } }
 /* Closing plays the entrance backwards (reverse also mirrors the easing, so it is the exact time-reversal). The keyframes
    are copies under new names: flipping only the direction of the finished panel-pop would not restart it. */
@@ -42,23 +42,168 @@ body { background: var(--bg); color: var(--fg); }
 }
 @keyframes dim-out { from { opacity: 0; } }
 .panel.closing { animation: panel-unpop 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) reverse both; pointer-events: none; }
-.panel-dim.closing { animation: dim-out 0.3s ease reverse both; }
+.panel-dim.closing { pointer-events: none; animation: dim-out 0.3s ease reverse both; }
 @media (prefers-reduced-motion: reduce) { .panel, .panel.closing, .panel-dim, .panel-dim.closing { animation: none; } }
 .panel p { margin: 4px 0; }
-.panel .logotype { height: 160px; margin: 24px 0 8px; background: center / contain no-repeat; }
-.panel .logo-credit { font-size: 11px; color: var(--muted); }
-.panel h1 { margin: 4px 0; font-size: 24px; line-height: 1.3; padding-right: 28px; }
-.panel .logotype ~ h1 { padding-right: 0; }
-.panel .hashtag { font-weight: 700; letter-spacing: 0.02em; }
-.panel .intro { max-height: 40vh; overflow-y: auto; margin-top: 10px; font-size: 15px; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
-.panel .homepage { display: inline-block; margin-top: 8px; margin-right: 12px; font-size: 13px; overflow-wrap: anywhere; }
+.panel .logo-credit { margin-top: 12px; font-size: 11px; color: var(--muted); }
+.panel h1 { margin: 4px 0; font-size: clamp(32px, 9vw, 48px); line-height: 1.2; padding-right: 28px; }
+/* The English name stays on the title line, smaller, so a long one (B12) does not push the card off screen. */
+.panel h1 .en { font-size: 0.75em; font-weight: 600; vertical-align: 0.2em; }
+.panel { max-height: calc(100% - 32px); overflow-y: auto; word-break: keep-all; overflow-wrap: break-word; }
+/* Header (title + tag) sits on the logo behind a dark dim; the content area below stays plain. The white base keeps a
+   dark logo on a transparent background visible under the dim. */
+.panel-head { position: relative; isolation: isolate; margin: -20px -24px 0; padding: 20px 24px 16px; }
+.panel.has-logo .panel-head { display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; min-height: 180px; color: #fff; }
+.panel .logotype { position: absolute; inset: 0; z-index: -1; padding: 16px 24px; background: linear-gradient(#000000a6, #000000a6), var(--logo) top / contain no-repeat content-box, #fff; }
+.panel .close { z-index: 1; }
+.panel.has-logo .close { color: #fff; }
+.panel.has-logo h1 { text-shadow: 0 1px 2px #0008; }
+/* A social-style tag chip tinted with the booth's map category color. */
+.panel .hashtag { display: inline-block; margin: 8px 0 4px; padding: 3px 12px; border-radius: 999px; background: var(--cat, #5b6070); color: #fff; font-size: 14px; font-weight: 700; letter-spacing: 0.02em; }
+.panel .intro { max-height: 40vh; overflow-y: auto; margin-top: 10px; font-size: 18px; line-height: 1.7; white-space: pre-line; overflow-wrap: break-word; text-wrap: pretty; }
+/* Intro on the left, a column of icon link buttons on the right. */
+.panel .about { display: grid; grid-template-columns: minmax(0, 60%) auto; justify-content: start; gap: 16px; align-items: start; margin-top: 10px; }
+.panel .about .intro { margin: 0; grid-column: 1; }
+.panel .links { grid-column: 2; display: flex; flex-direction: row; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.panel .links a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); color: inherit; background: #f3f4f7; }
+.panel .links a:hover { background: #e6e8ee; }
+.panel .links svg { width: 22px; height: 22px; }
 .panel .notices { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
-.panel .notices h2 { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
-.panel .notices ul { margin: 0; padding: 0; list-style: none; max-height: 24vh; overflow-y: auto; }
-.panel .notices li + li { margin-top: 6px; }
-.panel .notices a { display: block; font-size: 14px; line-height: 1.5; color: inherit; text-decoration: none; }
-.panel .notices a:hover { text-decoration: underline; }
+.panel .notices h2 { margin: 0 0 10px; font-size: 20px; }
+/* User: posts stacked in one column, newest on top, each as wide as the card (react-tweet caps its root at 550px). */
+.panel .notices ul { display: flex; flex-direction: column; gap: 24px; margin: 0; padding: 0; list-style: none; }
+/* User: body text the size of the nickname (react-tweet sets the body at 1.25rem, the header at 0.9375rem). */
+/* User: each post card stands apart from the panel and its neighbours by its own background. */
+.panel .notices .react-tweet-theme { max-width: none; margin: 0; --tweet-bg-color: #f3f6f9; --tweet-bg-color-hover: #f3f6f9; --tweet-container-border: 1px solid #d5dde5; box-shadow: 0 1px 3px rgb(15 20 25 / 0.08); --tweet-header-font-size: 1.0625rem; --tweet-body-font-size: var(--tweet-header-font-size); --tweet-body-line-height: 1.4; }
+/* NoticeTweet: avatar column on the left, name · @handle · X icon on one line, the post right below the name. */
+.nt-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: start; }
+/* Thread: a line from this avatar down to the next post's avatar, as on X. */
+.nt-row.linked { padding-bottom: 16px; }
+.nt-row.linked .nt-avatar-link { align-self: stretch; display: flex; flex-direction: column; align-items: center; }
+.nt-row.linked .nt-avatar-link::after { content: ""; flex: 1; width: 2px; margin: 4px 0 -16px; background: var(--tweet-border-color, #cfd9de); }
+.nt-avatar { width: 48px; height: 48px; border-radius: 50%; }
+.nt-avatar.square { border-radius: 4px; }
+.nt-author { display: flex; align-items: center; gap: 2px; min-width: 0; font-size: var(--tweet-header-font-size); line-height: var(--tweet-header-line-height); white-space: nowrap; }
+.nt-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+/* From react-tweet's verified-badge / highlighted-label CSS. */
+.nt-verified { display: inline-flex; }
+.nt-verified svg { margin-left: 0; }
+.nt-handle { margin-left: 2px; }
+.nt-sep, .nt-time { flex: none; color: var(--tweet-font-color-secondary); }
+.nt-sep { padding: 0 2px; }
+.nt-author a { color: inherit; text-decoration: none; }
+.nt-author .nt-handle, .nt-author .nt-time { color: var(--tweet-font-color-secondary); }
+.nt-name:hover, .nt-handle:hover, .nt-time:hover { text-decoration: underline; }
+.nt-avatar { display: block; }
+.nt-verified.blue { color: var(--tweet-verified-blue-color); }
+.nt-verified.old { color: var(--tweet-verified-old-color); }
+.nt-verified.gov { color: rgb(130, 154, 171); }
+.nt-label { display: flex; width: 1.0625em; height: 1.0625em; max-width: 17px; max-height: 17px; border: var(--tweet-border); border-radius: 2px; }
+.nt-label > img { width: 100%; height: 100%; }
+.nt-handle { color: var(--tweet-font-color-secondary); overflow: hidden; text-overflow: ellipsis; }
+.nt-brand { margin-left: auto; flex: none; display: flex; align-items: center; gap: 6px; color: var(--tweet-twitter-icon-color); font-weight: 600; }
+.nt-brand:hover span { text-decoration: underline; }
+.nt-brand svg { width: 20px; height: 20px; fill: currentColor; }
+.nt-main > p:first-of-type { margin-top: 2px; }
+/* Long post text (NoticeTweet) set like react-tweet's own body. */
+.nt-note { margin: var(--tweet-body-margin); font-size: var(--tweet-body-font-size); font-weight: var(--tweet-body-font-weight); line-height: var(--tweet-body-line-height); white-space: pre-wrap; overflow-wrap: break-word; }
+.nt-note a { color: var(--tweet-color-blue-secondary); text-decoration: none; }
+.nt-note a:hover { text-decoration: underline; }
+/* Post media: one slide per item, swiped or stepped with the arrows. */
+.nt-media { container-type: inline-size; position: relative; margin-top: 0.75rem; border: var(--tweet-border); border-radius: 12px; overflow: hidden; }
+.nt-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; background: #f3f4f7; }
+.nt-track::-webkit-scrollbar { display: none; }
+.nt-slide { position: relative; flex: 0 0 100%; scroll-snap-align: start; min-width: 0; }
+.nt-slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.nt-prev, .nt-next { position: absolute; top: 50%; translate: 0 -50%; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #000a; color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.nt-prev { left: 8px; }
+.nt-next { right: 8px; }
+.nt-prev:disabled, .nt-next:disabled { opacity: 0; pointer-events: none; }
+.nt-count { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 999px; background: #000a; color: #fff; font-size: 12px; }
+.panel .notices .react-tweet-theme { margin: 0; word-break: normal; }
+.panel .notices .notice-link { display: block; font-size: 14px; line-height: 1.5; color: inherit; text-decoration: none; }
+.panel .notices .notice-link:hover { text-decoration: underline; }
 .panel .notices time { margin-right: 8px; font-variant-numeric: tabular-nums; color: var(--muted); }
+/* Stage card: the booth card's shell, its accent the stage's colour. */
+.stage-panel h1 { color: var(--stage); }
+.stage-panel .official { font-size: 14px; font-weight: 600; color: var(--stage); }
+/* User: "공식 타임테이블 링크는 RED STAGE 오른쪽에 넣자" -- the link sits on the title's line. */
+/* User: "BLUE STAGE center align" -- the title on the card's centre line, the link just right of it: a 1fr auto 1fr grid
+   keeps the title centred whatever the link's width, and equal side padding (48px, room for the close button) keeps the
+   grid's centre on the card's (the card's left padding is 12px, hence that margin). */
+.stage-panel .panel-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px; margin-left: -12px; padding-left: 48px; padding-right: 48px; padding-bottom: 8px; }
+.stage-panel .panel-head h1 { grid-column: 2; }
+.stage-panel .panel-head .official { grid-column: 3; justify-self: start; }
+/* User: "BLUE STAGE 텍스트 가운데 정렬 높이 약간 눌리게", then "좀 더 누르고" -- the title squashed to 78% height, its line
+   box trimmed to match (1.2 x 0.78 ~ 0.94) so the squash leaves no empty band above or below; the link is centred on it. */
+.stage-panel .panel-head h1 { padding-right: 0; line-height: 0.94; transform: scaleY(0.78); transform-origin: center; }
+.stage-status { color: var(--muted); }
+/* User: "모달 전체 width 늘려" -- the show days side by side need more room than the 960px booth card; this card alone
+   widens, so three day columns fit without scrolling from a 1280px viewport up. */
+/* A day column is as wide as in a full three-day card; a stage with fewer days gets a narrower card, not wider blocks.
+   76px is the card's padding and border (38px) plus the axis column (38px); 6px is the gap before each day. */
+.stage-panel { --day-col: calc((min(1600px, 100vw - 32px) - 76px - 3 * 6px) / 3); width: min(100vw - 32px, calc(76px + var(--days, 3) * (6px + max(var(--day-col), 360px)))); }
+/* User: "왼쪽 시간 부분 바깥 마진 좀 줄이고" -- the time axis sits close to the card edge and the first day. */
+.stage-panel { padding-left: 12px; }
+/* User: a time-proportional schedule on one axis; StagePanel sets each block's top and height from one px-per-minute
+   scale. The week is its own scroller, so the day headings stay pinned on top and the time axis on the left when the
+   columns do not fit sideways. */
+.stage-week { display: grid; grid-template-columns: 38px repeat(var(--days), minmax(0, 1fr)); grid-template-rows: auto 1fr; gap: 0 6px; max-height: calc(100vh - 200px); margin: 7px 0 10px; overflow: auto; }
+/* Not every day fits (StagePanel sets data-fit and --col-w from the measured width): two or one day columns fill the
+   width and the week scrolls sideways a day at a time, the axis pinned on the left. */
+.stage-week:is([data-fit="two"], [data-fit="one"]) { grid-template-columns: 38px repeat(var(--days), var(--col-w)); scroll-snap-type: x mandatory; padding-inline: 16px; scroll-padding-inline: 60px 16px; }
+/* The axis keeps to the left edge over the 16px inset, so the previous day peeks in between the axis and the shown day. */
+.stage-week:is([data-fit="two"], [data-fit="one"]) :is(.stage-corner, .stage-axis) { width: 38px; margin-left: -16px; left: -16px; }
+.stage-week:is([data-fit="two"], [data-fit="one"]) .stage-day { scroll-snap-align: start; }
+/* Margins collapse through the scroller, so its box is the week's visible box and 50% is its middle. */
+.stage-scroller { position: relative; }
+.stage-nav { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .stage-scroller:has(.stage-week:is([data-fit="two"], [data-fit="one"])) .stage-nav { display: grid; }
+}
+.stage-nav { place-items: center; position: absolute; top: 50%; z-index: 5; width: 32px; height: 32px; padding: 0 0 3px; border: 1px solid var(--line); border-radius: 50%; background: #fffe; box-shadow: 0 2px 8px #0002; font-size: 22px; line-height: 1; color: var(--stage); cursor: pointer; transform: translateY(-50%); }
+.stage-nav.prev { left: 40px; }
+.stage-nav.next { right: 2px; }
+.stage-nav:disabled { opacity: 0.35; cursor: default; }
+.stage-nav:focus-visible { outline: 2px solid var(--stage); outline-offset: 2px; }
+.stage-corner, .stage-day { position: sticky; top: 0; z-index: 3; background: #fff; }
+.stage-corner, .stage-axis { position: sticky; left: 0; z-index: 4; background: #fff; }
+.stage-day { margin: 0; padding: 6px 0 10px; font-size: 16px; font-variant-numeric: tabular-nums; text-align: center; border-bottom: 2px solid var(--stage); }
+.stage-axis, .stage-track { margin-top: 10px; }
+.stage-track { position: relative; }
+.stage-axis span { position: absolute; right: 0; transform: translateY(-50%); font-size: 12px; line-height: 1; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage-axis span:first-child { transform: none; }
+.stage-axis span.hour { font-weight: 700; color: var(--fg); }
+.stage-track .tick { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line); }
+.stage-track .tick.hour { border-top-style: solid; }
+.stage-none { position: absolute; top: 24px; left: 0; right: 0; text-align: center; color: var(--muted); }
+.stage-list { margin: 0; padding: 0; list-style: none; }
+.stage-list li { --block: color-mix(in srgb, var(--stage) 5%, #fff); position: absolute; z-index: 1; left: 0; right: 0; display: grid; grid-template-columns: var(--guests, max-content) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 6px 24px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--stage); border-radius: 8px; background: var(--block); cursor: pointer; }
+/* User: time above the stage name, not side by side. */
+/* User: "카드 내부 전체적으로 행간 자간 줄이자" -- tighter leading and tracking inside the blocks. */
+.stage-what { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; font-size: 17px; line-height: 1.2; letter-spacing: -0.02em; }
+.stage-list .name { grid-column: 1 / -1; font-size: 17px; font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; text-align: center; text-wrap: balance; }
+/* User: "인물과 설명 사이에 vbar 회색" -- a thin gray rule centred in the 24px gap between participants and description. */
+.stage-list li:not(.solo) .stage-about::before { content: ""; position: absolute; top: 0; bottom: 0; left: -12.5px; border-left: 1px solid #c8ccd2; }
+/* A block with no participants (or image) gives the description the full width. */
+.stage-list li.solo { grid-template-columns: minmax(0, 1fr); }
+.stage-what .guests { width: max-content; max-width: none; margin: 0 0 0 auto; padding: 0; list-style: none; font-size: 14px; color: var(--muted); text-align: right; }
+/* User: "참여 인원 너비 max-content로 정리" -- the left column is as wide as the longest list on the card (StagePanel
+   measures it into --guests); the description takes the rest. */
+.stage-what .guests li { position: static; display: block; padding: 0; border: 0; background: none; white-space: nowrap; }
+/* The left column stays inside the slot: the image shrinks to the room left under the time and name. */
+.stage-what img { flex: 1 1 0; min-height: 0; width: auto; max-width: 100%; margin-top: 8px; object-fit: contain; object-position: left top; border-radius: 8px; border: 1px solid var(--line); }
+/* Only the description grows: cut to the slot with a fade, and on hover, focus or a tap (.open) it drops down over the
+   blocks below from its own top; the block itself keeps its size. */
+.stage-about { position: relative; min-height: 0; }
+.stage-desc { position: absolute; top: 0; left: 0; right: 0; max-height: 100%; overflow: hidden; background: var(--block); }
+.stage-desc[data-clipped]::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 36px; background: linear-gradient(transparent, var(--block)); pointer-events: none; }
+.stage-about .comment { margin: 0; font-size: 15px; line-height: 1.35; letter-spacing: -0.01em; text-indent: 1em; text-wrap: pretty; }
+.stage-about .comment.gap { margin-top: 0.6em; }
+.stage-about .copyright { margin: 8px 0 0; font-size: 11px; line-height: 1.35; letter-spacing: -0.01em; color: var(--muted); }
+.stage-list li:is(:hover, :focus-visible, .open) { z-index: 2; }
+.stage-list li:is(:hover, :focus-visible, .open) .stage-desc { max-height: none; margin: -8px -10px; padding: 8px 10px; border-radius: 8px; box-shadow: 0 8px 24px #0003; }
+.stage-list li:is(:hover, :focus-visible, .open) .stage-desc::after { content: none; }
 .close { position: absolute; top: 6px; right: 8px; width: 36px; height: 36px; border: 0; background: none; font-size: 24px; cursor: pointer; color: var(--fg); }
 .footer { padding: 6px 16px; font-size: 11px; line-height: 1.4; color: var(--muted); border-top: 1px solid var(--line); }
 .view-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import type { AreaKind, MapData } from "../maps/types";
+import { stageKey, stageOfArea, type AreaKind, type MapData } from "../maps/types";
 import { DroneRig, RoadRig } from "./CameraRigs";
 import { Building } from "./Building";
 import { BuildingDetails } from "./BuildingDetails";
@@ -31,6 +31,7 @@ interface AreasProps {
   data: MapData;
   images: Images | null;
   fontReady: boolean;
+  onSelect: (code: string | null) => void;
 }
 
 interface AreaMeshProps {
@@ -39,6 +40,7 @@ interface AreaMeshProps {
   markers: Marker[];
   images: Images | null;
   fontReady: boolean;
+  onSelect: (code: string | null) => void;
 }
 
 interface FloorProps {
@@ -74,7 +76,7 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }:
       <Building data={data} mode={view} />
       <BuildingDetails data={data} mode={view} />
       {view === "road" && <HallInterior data={data} decals={decals} />}
-      <Areas data={data} images={images} fontReady={fontReady} />
+      <Areas data={data} images={images} fontReady={fontReady} onSelect={onSelect} />
       <Booths data={data} booths={booths} selected={selected} view={view} onSelect={onSelect} />
       {view === "road" && <DebugProbe />}
       {view === "drone" ? (
@@ -92,7 +94,7 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }:
  * Raised areas (stage, seating, rooms): one mesh each, whose top samples one canvas where the fill, the plan images
  * on it and its label were composited in 2D. Areas with height 0 are drawn into the floor instead (see Floor).
  */
-const Areas = ({ data, images, fontReady }: AreasProps) => {
+const Areas = ({ data, images, fontReady, onSelect }: AreasProps) => {
   const m = data.metersPerPx;
   // Per area, the markers on it; memoised so each area's texture is drawn once, not on every Scene render.
   const onArea = useMemo(() => {
@@ -110,6 +112,7 @@ const Areas = ({ data, images, fontReady }: AreasProps) => {
             markers={onArea[i]}
             images={images}
             fontReady={fontReady}
+            onSelect={onSelect}
           />
         ) : null,
       )}
@@ -117,7 +120,7 @@ const Areas = ({ data, images, fontReady }: AreasProps) => {
   );
 };
 
-const AreaMesh = ({ area: a, m, markers, images, fontReady }: AreaMeshProps) => {
+const AreaMesh = ({ area: a, m, markers, images, fontReady, onSelect }: AreaMeshProps) => {
   const s = AREA_STYLE[a.kind];
   const fill = a.color ?? s.color;
   const geom = useMemo(() => {
@@ -164,10 +167,22 @@ const AreaMesh = ({ area: a, m, markers, images, fontReady }: AreaMeshProps) => 
   );
 
   const tag = debug({ what: `${AREA_KO[a.kind]} "${a.label}"`, source: "배치도", ref: `areas[id=${a.id}]`, component: "Scene.tsx (AreaMesh)", note: `height ${s.h} m from AREA_STYLE (임의)` });
+  // User: a click on the RED/BLUE STAGE opens its official timetable, the way a booth click opens the booth card.
+  const stage = stageOfArea(a);
+  const click = stage
+    ? {
+        onClick: (e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          // A drag (orbit or look-around) that ends on the stage is not a pick.
+          if (e.delta > 4) return;
+          onSelect(stageKey(stage));
+        },
+      }
+    : {};
   return a.polygon ? (
-    <mesh geometry={geom} rotation-x={-Math.PI / 2} material={mats.list} {...tag} />
+    <mesh geometry={geom} rotation-x={-Math.PI / 2} material={mats.list} {...tag} {...click} />
   ) : (
-    <mesh geometry={geom} position={[(a.x + a.w / 2) * m, s.h / 2, (a.y + a.h / 2) * m]} material={mats.list} {...tag} />
+    <mesh geometry={geom} position={[(a.x + a.w / 2) * m, s.h / 2, (a.y + a.h / 2) * m]} material={mats.list} {...tag} {...click} />
   );
 };
 

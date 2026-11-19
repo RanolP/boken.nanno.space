@@ -8,6 +8,8 @@
     "font": "scripts/subset-font.sh",
     "logos": "node scripts/fetch-logos.mjs && npm run logos:bg",
     "exhibitors": "node scripts/fetch-exhibitor-info.mjs",
+    "tweets": "node scripts/fetch-tweets.mjs",
+    "stages": "node scripts/fetch-stages.mjs",
     "logos:bg": "uv run --with pillow --with numpy --with scipy python scripts/remove-logo-bg.py",
     "markers": "uv run --with pillow==13.0.0 --with numpy==2.5.5 --with scipy==1.18.1 python scripts/crop-markers.py scripts/agf-2026-markers.json",
     "structure": "scripts/kintex-structure.sh",
@@ -19,6 +21,7 @@
     "@react-three/fiber": "9.8.2",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "react-tweet": "3.3.1",
     "three": "0.187.0"
   },
   "devDependencies": {

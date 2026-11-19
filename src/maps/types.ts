@@ -1,9 +1,23 @@
 import type { Structure } from "./structure";
 import type { Credit } from "../credits/types";
+import type { Tweet } from "react-tweet/api";
 
 /** Single source for valid area kinds; the renderer styles each one. */
 export const AREA_KINDS = ["stage", "seating", "facility", "hall-label", "photo-zone", "floor-marking"] as const;
 export type AreaKind = (typeof AREA_KINDS)[number];
+
+/** RED/BLUE STAGE, as the official timetable names them (agfkorea.com/stage `gubun`). */
+export type StageId = "red" | "blue";
+/** One programme on a stage's official timetable, written by `npm run stages`; an empty string means not given. */
+export type StageEntry = { time: string; name: string; guest: string; comment: string; image: string; copyright: string; url: string };
+/** Stage timetables by stage, then by show day ("12-05"), each day in time order. */
+export type Stages = Record<StageId, Record<string, StageEntry[]>>;
+/** App's `selected` holds booth codes; a stage card is selected under this key instead. */
+export const stageKey = (id: StageId) => `stage:${id}`;
+export const stageOfKey = (key: string | null): StageId | null => (key === "stage:red" ? "red" : key === "stage:blue" ? "blue" : null);
+/** The timetable a stage area opens, by its id: "red-stage", "red-stage-wing-left", "blue-stage", ... */
+export const stageOfArea = (a: { id: string; kind: AreaKind }): StageId | null =>
+  a.kind === "stage" ? ((a.id.match(/^(red|blue)-stage/)?.[1] as StageId | undefined) ?? null) : null;
 
 export type MapData = {
   id: string;
@@ -36,7 +50,7 @@ export type MapData = {
     /** Official X handle (no @), found from the exhibitor's homepage link or a verified bio. */
     xAccount?: string;
     /** The exhibitor's own X posts about its AGF booth, newest first. */
-    notices?: { url: string; date?: string; summary: string }[];
+    notices?: { url: string; date?: string; summary?: string }[];
   }[];
   areas: {
     id: string;
@@ -73,4 +87,8 @@ export type MapMeta = {
   credits: Credit[];
   /** True when booths show exhibitor logos; adds a short caption under the Panel logo. */
   showsExhibitorLogos?: boolean;
+  /** Crawled notice posts keyed by status id (`npm run tweets`); loaded on first card open to keep them out of the main bundle. */
+  loadTweets?: () => Promise<Record<string, Tweet>>;
+  /** Official stage timetables (`npm run stages`); loaded when a stage card first opens. */
+  loadStages?: () => Promise<Stages>;
 };

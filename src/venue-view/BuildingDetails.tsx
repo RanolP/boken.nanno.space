@@ -17,7 +17,6 @@ const GLAZING_TOP_M = 3.2;
 /** Fire shutter boxes sit above the door head; the drawing gives neither height, so these are stand-ins too. */
 const SHUTTER_Y_M: [number, number] = [3.6, 4.0];
 const HANDRAIL_Y_M: [number, number] = [0.85, 0.9];
-const HYDRANT_Y_M: [number, number] = [0.2, 1.7];
 
 type Seg = { a: [number, number]; b: [number, number] };
 type Box = [number, number, number, number];
@@ -60,7 +59,7 @@ const instanced = (geometry: THREE.BufferGeometry, material: THREE.Material, pie
 
 /**
  * Road-view interior from `data.structure.details` (KINTEX CAD): columns, the lobby-side service band
- * (room walls, stairs, lift shafts, glazing, hydrant cabinets, fire shutters, handrails). The hall floor's trench
+ * (room walls, stairs, lift shafts, glazing, fire shutters, handrails). The hall floor's trench
  * covers and expansion joints are baked into the floor texture rather than modelled: thin boxes on the floor plane lost
  * the depth test to the polygon-offset floor at a view-dependent distance and flickered in and out while walking.
  * Drone view shows none of it, so its top-down view stays the official plan.
@@ -99,7 +98,7 @@ export const BuildingDetails = ({ data, mode }: Props) => {
     const glass = new THREE.MeshStandardMaterial({ color: "#a9cfe0", transparent: true, opacity: 0.28, roughness: 0.1, metalness: 0.1, envMap, depthWrite: false });
     add(box, glass, d.glazing.map((s) => fromSeg(s, m, 0.03, 0, GLAZING_TOP_M)), "유리벽", "glazing", "height 3.2 m, thickness 0.03 m are 임의");
     add(box, metal("#5b6168", 0.5, 0.4), d.mullions.map((r) => fromBox(r, m, 0, GLAZING_TOP_M)), "멀리언 (유리 프레임)", "mullions", "height 3.2 m is 임의");
-    add(box, std("#b3261e"), d.hydrants.map((r) => fromBox(r, m, ...HYDRANT_Y_M)), "소화전", "hydrants", "y 0.2-1.7 m is 임의");
+    // User: "소화전 전부 hide" — details.hydrants stay in the data but are not drawn.
     add(box, metal("#696e75", 0.4), d.shutters.map((s) => fromSeg(s, m, 0.3, ...SHUTTER_Y_M)), "셔터", "shutters", "y 3.6-4.0 m, depth 0.3 m are 임의");
     add(box, metal("#454a50", 0.6, 0.35), d.handrails.map((s) => fromSeg(s, m, 0.05, ...HANDRAIL_Y_M)), "난간", "handrails", "y 0.85-0.9 m is 임의");
     return g;

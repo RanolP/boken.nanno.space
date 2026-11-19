@@ -113,6 +113,12 @@ export const moveAxes = (input: MoveInput) => ({
  * enters between them. Wall runs already stop at entrances, docks and doors, so those stay open; movable partitions
  * are floor seams, not walls.
  */
+/** User: openings[54], openings[55] on the hall-1 end wall are cargo entrances with the roll shutter down (closed, solid); openings[56..59] are hall doors (E toggles them).
+ * Building draws them; here they block the walker. A hall door's id in openDoors is HALL_DOOR_IDX_BASE + opening index (past every wall index). */
+export const SHUTTER_OPENINGS = new Set([54, 55]);
+export const HALL_DOOR_OPENINGS = new Set([56, 57, 58, 59]);
+export const HALL_DOOR_IDX_BASE = 100000;
+
 export const obstaclesOf = (data: MapData, booths: Booth[]): Obstacles => {
   const m = data.metersPerPx;
   const boothRects = booths.map((b) => rectOf(b, m));
@@ -128,6 +134,11 @@ export const obstaclesOf = (data: MapData, booths: Booth[]): Obstacles => {
         bz: w.b[1] * m,
         r: w.thicknessM / 2,
       })),
+      ...(data.structure?.openings ?? []).flatMap((o, oi) =>
+        SHUTTER_OPENINGS.has(oi) || HALL_DOOR_OPENINGS.has(oi)
+          ? [{ idx: HALL_DOOR_OPENINGS.has(oi) ? HALL_DOOR_IDX_BASE + oi : undefined, ax: o.a[0] * m, az: o.a[1] * m, bx: o.b[0] * m, bz: o.b[1] * m, r: 0.2 }]
+          : [],
+      ),
       ...boothRects.flatMap((r) => boothPosts(r).map(([x, z]) => ({ ax: x, az: z, bx: x, bz: z, r: postR }))),
     ],
     fixed: data.structure?.details ? buildFixedGrid(data.structure.details, m) : undefined,

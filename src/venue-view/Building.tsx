@@ -6,6 +6,7 @@ import type { ViewMode } from "./walk";
 import { CAD_ONLY } from "./HallInterior";
 import { debug } from "./DebugInspector";
 import { DOOR_SWING_RAD, doorProgress, registerDoors } from "./roadInteract";
+import { HALL_DOOR_IDX_BASE, HALL_DOOR_OPENINGS, SHUTTER_OPENINGS } from "./walk";
 
 interface Props {
   data: MapData;
@@ -54,6 +55,10 @@ const HINGE_KNOB_D_M = 0.025;
 const HINGE_KNOB_H_M = 0.025;
 /** 벽 패널 줄눈: texture baked into the faces of the walls in TEXTURED_WALLS (structure.walls indices), floor to door height; above that the wall's own colour (user photo: warm-grey panel, thin horizontal seams). */
 const TEXTURED_WALLS = new Set([0, 1]);
+/** User: walls[58] (the dock-side stub at the far end of the walls[59..67] chain) takes walls[0]'s bake; its tiles start on a joint at the corner it shares with walls[59]. */
+// User: then extended along the same dock line to walls[57], walls[56] and the heads of openings[53], openings[52]; one U origin for the whole line.
+const WALL0_TEX_WALLS = new Set([58, 57, 56]);
+const WALL0_TEX_OPENINGS = new Set([53, 52]);
 /** structure.openings indices whose door head gets the same bake, cut to the head's height range so rows line up with the walls beside it. */
 const TEXTURED_OPENINGS = new Set([0]);
 /** User: from the bottom of ochre row 0 (first asked from row 1, then row 0 filled as a copy of row 1) up, the pattern runs on past walls[1] to walls[2]: those walls are split there
@@ -62,7 +67,18 @@ const EXTENDED_WALLS = new Set([2]);
 const EXTENDED_OPENINGS = new Set([1]);
 /** User: walls[67], then walls[66] and walls[65] (the hall-1 end walls chained back from walls[0]'s left end) take the same full-height bake with the brown-grey band;
  * U runs back along the chain from walls[0]'s start so the tiles continue around each corner. Order = chain order from walls[0]. */
-const CORNER_WALLS = [67, 66, 65];
+// User: walls[64..59] (the rest of the hall-1 end wall, split by openings[54..59]) join the merged wall the same way; the
+// openings stay open and U keeps counting across them so the tiles line up as one wall.
+const CORNER_WALLS = [67, 66, 65, 64, 63, 62, 61, 60, 59];
+/** User: the two wide gaps in that chain (openings[54], openings[55]) are cargo entrances (user first called them fire shutters, then corrected) closed by a roll shutter, from the floor up to the top of ochre row 0;
+ * the merged wall carries on above them. Slat pitch, depth and shade are placeholders. */
+const SHUTTER_T_M = 0.12;
+const SHUTTER_SLAT_M = 0.1;
+const SHUTTER_GREY = "#b9bcbf";
+/** User: a cement-like lintel just above each shutter, about 3 slats tall, sticking out a little on both faces. Overhang and shade are placeholders. */
+const SHUTTER_LINTEL_SLATS = 3;
+const SHUTTER_LINTEL_OUT_M = 0.08;
+const SHUTTER_LINTEL_GREY = "#a5a29b";
 /** User sketch #5 (entrance elevation + plan): two right-triangle prisms at openings[ENTRANCE_PRISM_OPENING], one per ochre row in ENTRANCE_PRISM_ROWS
  * (row 0 = lowest above the door band; 1 = the row right above the opening, 5 = the top grey row). Plan: right angle at the opening's left end
  * on the hall-side face, one leg along the wall to a tile joint past the opening's right end, the other leg into the hall.
@@ -413,7 +429,7 @@ export const Building = ({ data, mode }: Props) => {
     // User: one tile fewer than fits at the leaf width, then 1.25x wider (rounded to a whole tile count so both ends stay joints).
     const tileW = runSpan > 0 ? runSpan / Math.max(1, Math.round((Math.floor(runSpan / leafW) - WALL_TILE_FEWER) / WALL_TILE_WIDEN)) : leafW;
     const base = CAD_ONLY ? wallMat : roadWallMat;
-    const out = new Map<string, { mats: THREE.Material[]; tex: THREE.Texture; back: THREE.Texture; y0: number; seg?: [[number, number], [number, number]]; geo?: THREE.BufferGeometry }>();
+    const out = new Map<string, { mats: THREE.Material[]; tex: THREE.Texture; back: THREE.Texture; y0: number; seg?: [[number, number], [number, number]]; geo?: THREE.BufferGeometry; runs?: Run[] }>();
     // One pattern over the whole wall line: V spans floor..H for every piece (a head shows only its y0..y1 slice),
     // U is metres along the line from a shared origin, so rows and tile joints run on across pieces.
     const H = s.ceilingM;
@@ -439,8 +455,15 @@ export const Building = ({ data, mode }: Props) => {
       const faceBack = new THREE.MeshStandardMaterial({ map: back });
       out.set(key, { mats: [base, base, base, base, face, faceBack], tex, back, y0 });
     };
+    // Dock line origin: a tile joint at walls[58]'s corner end (shared with walls[59]); every piece on that line measures U from it.
+    const w58 = s.walls[58];
+    const dockOrg = w58 ? along(w58.a, w58.b, w58.b) + w58.thicknessM / 2 - tileW * WALL_TILE_SHIFT : originU;
     s.walls.forEach((w, i) => {
       if (TEXTURED_WALLS.has(i) && w.side !== "exit-door") add(`w${i}`, w.a, w.b, w.thicknessM, 0, w.heightM);
+      if (WALL0_TEX_WALLS.has(i)) add(`w${i}`, w.a, w.b, w.thicknessM, 0, w.heightM, dockOrg);
+    });
+    s.openings.forEach((o, i) => {
+      if (WALL0_TEX_OPENINGS.has(i) && o.heightM !== undefined) add(`o${i}`, o.a, o.b, HEAD_EXT_M, o.heightM, H, dockOrg);
     });
     // User: walls[65..67] are one merged wall (a mitered extrusion along the chain), not overlapping boxes:
     // box ends overlapped at the corners and either flickered or showed a white end cap.
@@ -450,12 +473,31 @@ export const Building = ({ data, mode }: Props) => {
     if (chain.length && w0) {
       const t = chain[0].thicknessM;
       // Points from walls[0]'s joint back along the chain, in metres (x, z).
-      const pts: [number, number][] = [];
+      // solid[k]: segment pts[k]..pts[k+1] is wall; false = an opening between two chain walls (no faces, U still advances).
+            const pts: [number, number][] = [];
+      const solid: boolean[] = [];
+      // headY[k]: that opening is a cargo entrance or a hall door, so the wall runs on above it from this height.
+      const headY: (number | undefined)[] = [];
+      const shutterRuns: Run[] = [];
+      const cut = Math.min(doorH, H);
+      const shutterTop = cut + (H - cut) / WALL_TILE_ROWS;
       let joint: [number, number] = w0.a;
       for (const w of chain) {
-        const far = near(w.a, joint) ? w.b : w.a;
         if (!pts.length) pts.push([joint[0] * m, joint[1] * m]);
+        else if (!near(w.a, joint) && !near(w.b, joint)) {
+          const d = (p: [number, number]) => Math.hypot(p[0] - joint[0], p[1] - joint[1]);
+          const from = joint;
+          joint = d(w.a) < d(w.b) ? w.a : w.b;
+          pts.push([joint[0] * m, joint[1] * m]);
+          solid.push(false);
+          const oi = s.openings.findIndex((o) => (near(o.a, from) && near(o.b, joint)) || (near(o.a, joint) && near(o.b, from)));
+          // User: openings[56..59] (the four short ones) are hall doors, headed at the door height like the exit doors.
+          headY[solid.length - 1] = SHUTTER_OPENINGS.has(oi) ? shutterTop : HALL_DOOR_OPENINGS.has(oi) ? cut : undefined;
+          if (SHUTTER_OPENINGS.has(oi)) shutterRuns.push(run(from, joint, m));
+        }
+        const far = near(w.a, joint) ? w.b : w.a;
         pts.push([far[0] * m, far[1] * m]);
+        solid.push(true);
         joint = far;
       }
       // Run the first point on by t/2 past the joint (toward walls[0]'s far side) so the corner square is filled.
@@ -508,6 +550,9 @@ export const Building = ({ data, mode }: Props) => {
         for (let k = 0; k < S.length - 1; k++) {
           const a = S[k];
           const b = S[k + 1];
+          const hy = headY[k];
+          if (hy !== undefined) quad([[a[0], hy, a[1]], [b[0], hy, b[1]], [b[0], top, b[1]], [a[0], top, a[1]]], [U(us[k]), U(us[k + 1]), U(us[k + 1]), U(us[k])], [hy / H, hy / H, top / H, top / H]);
+          if (!solid[k]) continue;
           quad([[a[0], 0, a[1]], [b[0], 0, b[1]], [b[0], top, b[1]], [a[0], top, a[1]]], [U(us[k]), U(us[k + 1]), U(us[k + 1]), U(us[k])], [0, 0, top / H, top / H]);
         }
       }
@@ -516,9 +561,36 @@ export const Building = ({ data, mode }: Props) => {
       quad([[outer[0][0], 0, outer[0][1]], [outer[1][0], 0, outer[1][1]], [outer[1][0], top, outer[1][1]], [outer[0][0], top, outer[0][1]]], [U(0), U(t), U(t), U(0)], [0, 0, top / H, top / H]);
       groups.push([g0, idx.length - g0, 1]);
       const g1 = idx.length;
-      for (let k = 0; k < L.length - 1; k++) quad([[L[k][0], top, L[k][1]], [L[k + 1][0], top, L[k + 1][1]], [R[k + 1][0], top, R[k + 1][1]], [R[k][0], top, R[k][1]]], [0, 0, 0, 0], [0, 0, 0, 0]);
+      for (let k = 0; k < L.length - 1; k++) if (solid[k] || headY[k] !== undefined) quad([[L[k][0], top, L[k][1]], [L[k + 1][0], top, L[k + 1][1]], [R[k + 1][0], top, R[k + 1][1]], [R[k][0], top, R[k][1]]], [0, 0, 0, 0], [0, 0, 0, 0]);
       const n = L.length - 1;
       quad([[L[n][0], 0, L[n][1]], [R[n][0], 0, R[n][1]], [R[n][0], top, R[n][1]], [L[n][0], top, L[n][1]]], [0, 0, 0, 0], [0, 0, 0, 0]);
+      // Wall ends facing each opening (the jambs).
+      for (let k = 0; k < n; k++) {
+        if (solid[k]) continue;
+        const y1 = headY[k] ?? top;
+        for (const j of [k, k + 1]) quad([[L[j][0], 0, L[j][1]], [R[j][0], 0, R[j][1]], [R[j][0], y1, R[j][1]], [L[j][0], y1, L[j][1]]], [0, 0, 0, 0], [0, 0, 0, 0]);
+        // Underside of the wall above a shutter.
+        if (y1 < top) quad([[L[k][0], y1, L[k][1]], [R[k][0], y1, R[k][1]], [R[k + 1][0], y1, R[k + 1][1]], [L[k + 1][0], y1, L[k + 1][1]]], [0, 0, 0, 0], [0, 0, 0, 0]);
+      }
+      if (shutterRuns.length) {
+        // Roll-shutter slats: a light face, a dark groove at each joint, a thin highlight under it; repeats every SHUTTER_SLAT_M.
+        const c = document.createElement("canvas");
+        c.width = 4;
+        c.height = 32;
+        const g = c.getContext("2d")!;
+        g.fillStyle = SHUTTER_GREY;
+        g.fillRect(0, 0, 4, 32);
+        g.fillStyle = "#6f7377";
+        g.fillRect(0, 0, 4, 3);
+        g.fillStyle = "#e3e5e7";
+        g.fillRect(0, 3, 4, 2);
+        const st = new THREE.CanvasTexture(c);
+        st.wrapS = st.wrapT = THREE.RepeatWrapping;
+        st.repeat.set(1, shutterTop / SHUTTER_SLAT_M);
+        st.colorSpace = THREE.SRGBColorSpace;
+        const sm = new THREE.MeshStandardMaterial({ map: st, metalness: 0.5, roughness: 0.45 });
+        out.set("shutter", { mats: [sm, sm, sm, sm, sm, sm], tex: st, back: st, y0: shutterTop, runs: shutterRuns });
+      }
       groups.push([g1, idx.length - g1, 0]);
       const geo = new THREE.BufferGeometry();
       geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
@@ -1064,7 +1136,11 @@ export const Building = ({ data, mode }: Props) => {
   if (!s) return null;
   const drone = mode === "drone";
   const pieces: { key: string; r: Run; y0: number; y1: number; t: number; ref: string; ext?: number }[] = [];
-  const doors: { i: number; r: Run; h: number; t: number }[] = [];
+  const doors: { i: number; r: Run; h: number; t: number; ref?: string }[] = [];
+  const hallDoorH = s.walls.find((w) => w.side === "exit-door")?.heightM;
+  if (!drone && hallDoorH)
+    for (const [oi, o] of s.openings.entries())
+      if (HALL_DOOR_OPENINGS.has(oi)) doors.push({ i: HALL_DOOR_IDX_BASE + oi, r: run(o.a, o.b, m), h: Math.min(hallDoorH, s.ceilingM), t: 0.4, ref: `structure.openings[${oi}]` });
   const near = (p: [number, number], q: [number, number]) => Math.abs(p[0] - q[0]) < 0.5 && Math.abs(p[1] - q[1]) < 0.5;
   const isExitDoor = (w: { a: [number, number]; b: [number, number] }) =>
     (s.exits ?? []).some((e) => e.doors.some((d) => (near(d.a, w.a) && near(d.b, w.b)) || (near(d.a, w.b) && near(d.b, w.a))));
@@ -1116,8 +1192,19 @@ export const Building = ({ data, mode }: Props) => {
       {bake?.get("prismFront")?.geo && (
         <mesh geometry={bake.get("prismFront")!.geo} material={bake.get("prismFront")!.mats[0]} {...debug({ what: "입구 직육면체·삼각기둥 전면 (메탈, row당 20줄 중 한 줄 걸러 음각 — 노멀맵)", source: "임의", ref: `structure.openings[${ENTRANCE_PRISM_OPENING}]`, component: "Building.tsx", note: "user request; stripe count ~20, colours and metalness are placeholders" })} />
       )}
+      {bake?.get("shutter")?.runs?.map((r, k) => (
+        <mesh key={`lintel${k}`} position={[r.cx, bake.get("shutter")!.y0 - (SHUTTER_LINTEL_SLATS * SHUTTER_SLAT_M) / 2, r.cz]} rotation={[0, r.angle, 0]} {...debug({ what: "화물출입구 셔터 상단 시멘트 인방", source: "임의", ref: `structure.openings[${[...SHUTTER_OPENINGS][k]}]`, component: "Building.tsx", note: "user: 셔터 줄무늬 3개 높이, 약간 돌출; overhang/colour placeholders" })}>
+          <boxGeometry args={[r.len, SHUTTER_LINTEL_SLATS * SHUTTER_SLAT_M, 0.4 + 2 * SHUTTER_LINTEL_OUT_M]} />
+          <meshStandardMaterial color={SHUTTER_LINTEL_GREY} roughness={0.95} />
+        </mesh>
+      ))}
+      {bake?.get("shutter")?.runs?.map((r, k) => (
+        <mesh key={`shutter${k}`} position={[r.cx, bake.get("shutter")!.y0 / 2, r.cz]} rotation={[0, r.angle, 0]} material={bake.get("shutter")!.mats[0]} {...debug({ what: "화물출입구 셔터", source: "임의", ref: `structure.openings[${[...SHUTTER_OPENINGS][k]}]`, component: "Building.tsx", note: "user: 황토 타일 아래에서 1칸까지; slat pitch/depth/colour placeholders" })}>
+          <boxGeometry args={[r.len, bake.get("shutter")!.y0, SHUTTER_T_M]} />
+        </mesh>
+      ))}
       {bake?.get("chain")?.geo && (
-        <mesh geometry={bake.get("chain")!.geo} material={bake.get("chain")!.mats} {...debug({ what: "홀1 끝 벽 (walls[65..67] 병합)", source: "CAD", ref: "structure.walls[65,66,67]", component: "Building.tsx", note: "one mitered mesh so the corners neither overlap nor flicker; texture baked" })} />
+        <mesh geometry={bake.get("chain")!.geo} material={bake.get("chain")!.mats} {...debug({ what: "홀1 끝 벽 (walls[59..67] 병합)", source: "CAD", ref: "structure.walls[59..67]", component: "Building.tsx", note: "one mitered mesh so the corners neither overlap nor flicker; texture baked" })} />
       )}
       {pieces.map(({ key, r, y0, y1, t, ref, ext }) => (
         <mesh
@@ -1136,7 +1223,7 @@ export const Building = ({ data, mode }: Props) => {
               : debug({ what: "외벽", source: "CAD", ref, component: "Building.tsx" }))}
         />
       ))}
-      {doors.map(({ i, r, h, t }) => {
+      {doors.map(({ i, r, h, t, ref: dref = `structure.walls[${i}]` }) => {
         const leafLen = r.len / 2 - DOOR_SEAM_M / 2;
         const lz = DOOR_SWING_SIDE * (Math.cos(r.angle) > 0 ? 1 : -1);
         return (
@@ -1147,9 +1234,9 @@ export const Building = ({ data, mode }: Props) => {
               const panelH = (h - (DOOR_PANELS + 1) * DOOR_RAIL_H_M) / DOOR_PANELS;
               const pitch = DOOR_RAIL_H_M + panelH;
               const note = "only outline groove recessed per user report; sizes 임의";
-              const hinge = debug({ what: "도어 상부 힌지 (본체+짧은 링크)", source: "임의", ref: `structure.walls[${i}]`, component: "Building.tsx", note: "from user sketch #3; sizes 임의" });
+              const hinge = debug({ what: "도어 상부 힌지 (본체+짧은 링크)", source: "임의", ref: dref, component: "Building.tsx", note: "from user sketch #3; sizes 임의" });
               const yk = h / 2 + HINGE_BASE_T_M + HINGE_KNOB_H_M / 2;
-              const frame = debug({ what: `양문형 도어 (${lr}) 프레임`, source: "임의", ref: `structure.walls[${i}]`, component: "Building.tsx", note });
+              const frame = debug({ what: `양문형 도어 (${lr}) 프레임`, source: "임의", ref: dref, component: "Building.tsx", note });
               return (
                 <group key={side}>
                 <SwingPivot i={i} sign={side * lz} position={[(side * r.len) / 2, 0, 0]}>
@@ -1182,13 +1269,13 @@ export const Building = ({ data, mode }: Props) => {
                           geometry={box}
                           material={grooveMat}
                           scale={[innerW, panelH, t - 2 * GROOVE_D_M]}
-                          {...debug({ what: "양문형 도어 ㅁ 홈", source: "임의", ref: `structure.walls[${i}]`, component: "Building.tsx", note })}
+                          {...debug({ what: "양문형 도어 ㅁ 홈", source: "임의", ref: dref, component: "Building.tsx", note })}
                         />
                         <mesh
                           geometry={box}
                           material={doorMat}
                           scale={[innerW - 2 * GROOVE_W_M, panelH - 2 * GROOVE_W_M, t]}
-                          {...debug({ what: `양문형 도어 (${lr}) 패널 ${k + 1}/${DOOR_PANELS}`, source: "임의", ref: `structure.walls[${i}]`, component: "Building.tsx", note })}
+                          {...debug({ what: `양문형 도어 (${lr}) 패널 ${k + 1}/${DOOR_PANELS}`, source: "임의", ref: dref, component: "Building.tsx", note })}
                         />
                       </group>
                     );

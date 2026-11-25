@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Prepares an Amp orb: installs npm dependencies from package-lock.json.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+node --version
+npm --version
+
+# `npm ci` never rewrites package-lock.json (`npm install` with an older npm
+# does), and on a warm snapshot it reinstalls from the npm cache in seconds.
+start=$SECONDS
+echo "==> npm ci"
+npm ci --no-audit --no-fund --prefer-offline
+echo "    done in $((SECONDS - start))s"

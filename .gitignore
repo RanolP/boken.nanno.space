@@ -4,3 +4,4 @@ dist
 *.tsbuildinfo
 # Baked from KINTEX photos whose licence is unchecked; rebuild locally with `npm run textures:kintex`.
 public/maps/*/textures/
+.amp/portals/*

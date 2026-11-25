@@ -1,0 +1,9 @@
+services:
+  web:
+    command: npm run dev -- --host 0.0.0.0 --port "$PORT" --strictPort
+    env:
+      # Let Vite accept requests from Amp portal hostnames.
+      __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: .onamp.dev
+    portal:
+      url: /
+      title: Boken

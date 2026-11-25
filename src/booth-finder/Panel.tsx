@@ -24,6 +24,8 @@ export const preloadTweets = (load: LoadTweets) => {
   return p;
 };
 
+const timelineCache = new Map<NonNullable<MapMeta["loadTimelines"]>, Record<string, string[]>>();
+
 const hostOf = (url: string) => {
   try {
     return new URL(url).host.replace(/^www\./, "");
@@ -76,6 +78,7 @@ interface Props {
   category?: { label: string; color: string };
   showsLogoCredit?: boolean;
   loadTweets?: MapMeta["loadTweets"];
+  loadTimelines?: MapMeta["loadTimelines"];
   onClose: () => void;
   /** Playing the exit animation; onClosed fires when it ends (at once when animations are off). */
   closing?: boolean;
@@ -88,6 +91,7 @@ export const Panel = ({
   category,
   showsLogoCredit,
   loadTweets,
+  loadTimelines,
   onClose,
   closing,
   onClosed,
@@ -104,7 +108,7 @@ export const Panel = ({
   }, [closing]);
   const [tweets, setTweets] = useState<Record<string, Tweet> | undefined>(() => (loadTweets ? tweetCache.get(loadTweets) : undefined));
   useEffect(() => {
-    if (!booth.notices || !loadTweets || tweets) return;
+    if (!(booth.notices || booth.xAccounts) || !loadTweets || tweets) return;
     let live = true;
     preloadTweets(loadTweets).then(
       (t) => live && setTweets(t),
@@ -114,7 +118,27 @@ export const Panel = ({
       live = false;
     };
   }, [booth.code]);
+  const [timelines, setTimelines] = useState<Record<string, string[]> | undefined>(() => (loadTimelines ? timelineCache.get(loadTimelines) : undefined));
+  useEffect(() => {
+    if (!booth.xAccounts || !loadTimelines || timelines) return;
+    let live = true;
+    loadTimelines().then(
+      (t) => (timelineCache.set(loadTimelines, t), live && setTimelines(t)),
+      (e) => console.error("booth timeline: timelines.json failed to load", e),
+    );
+    return () => {
+      live = false;
+    };
+  }, [booth.code]);
   const inThread = new Set(booth.notices?.flatMap((n) => threadIds(tweets?.[statusId(n.url)]) ?? []));
+  // A post already shown as a notice (or inside a notice's thread) is not repeated in the timeline.
+  const shownIds = new Set([...(booth.notices ?? []).map((n) => statusId(n.url)), ...inThread]);
+  const timelineGroups = (booth.xAccounts ?? [])
+    .map((handle) => ({
+      handle,
+      posts: (timelines?.[handle] ?? []).filter((id) => !shownIds.has(id)).map((id) => tweets?.[id]).filter((t): t is Tweet => !!t),
+    }))
+    .filter((g) => g.posts.length > 0);
   const ex = booth.exhibitor;
   const en = ex?.en && ex.en !== ex.ko ? ` (${ex.en})` : "";
   // Two exhibitors list an Instagram page as their homepage; show it as the Instagram button, not as a website.
@@ -125,11 +149,11 @@ export const Panel = ({
       href: booth.homepage,
       label: `웹사이트 / Website: ${hostOf(booth.homepage)}`,
     });
-  if (booth.xAccount)
+  for (const h of booth.xAccounts ?? [])
     links.push({
       kind: "x",
-      href: `https://x.com/${booth.xAccount}`,
-      label: `X: @${booth.xAccount}`,
+      href: `https://x.com/${h}`,
+      label: `X: @${h}`,
     });
   if (booth.homepage && isInstagram(booth.homepage))
     links.push({
@@ -183,7 +207,7 @@ export const Panel = ({
           {links.length > 0 && (
             <ul className="links">
               {links.map((l) => (
-                <li key={l.kind}>
+                <li key={l.href}>
                   <a
                     href={l.href}
                     target="_blank"
@@ -226,6 +250,29 @@ export const Panel = ({
               );
             })}
           </ul>
+        </section>
+      )}
+      {timelineGroups.length > 0 && (
+        <section className="notices timeline" aria-label="최근 타임라인 / Recent posts">
+          <h2>최근 타임라인 / Recent posts</h2>
+          {timelineGroups.map((g) => (
+            <div key={g.handle} className="timeline-account">
+              <h3>
+                <a href={`https://x.com/${g.handle}`} target="_blank" rel="noopener noreferrer">
+                  @{g.handle}
+                </a>
+              </h3>
+              <ul>
+                {g.posts.map((t) => (
+                  <li key={t.id_str}>
+                    <div data-theme="light">
+                      <NoticeTweet tweet={t} thread={[]} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </section>
       )}
       {booth.logo && showsLogoCredit && (

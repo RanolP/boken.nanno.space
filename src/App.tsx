@@ -136,6 +136,7 @@ const MapView = ({ entry }: MapViewProps) => {
             category={data.categories[shownBooth.category]}
             showsLogoCredit={meta.showsExhibitorLogos}
             loadTweets={meta.loadTweets}
+            loadTimelines={meta.loadTimelines}
             onClose={closePanel}
           />
         )}

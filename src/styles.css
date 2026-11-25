@@ -123,6 +123,9 @@ body { background: var(--bg); color: var(--fg); }
 .panel .notices .react-tweet-theme { margin: 0; word-break: normal; }
 .panel .notices .notice-link { display: block; font-size: 14px; line-height: 1.5; color: inherit; text-decoration: none; }
 .panel .notices .notice-link:hover { text-decoration: underline; }
+.panel .notices .timeline-account + .timeline-account { margin-top: 18px; }
+.panel .notices .timeline-account h3 { margin: 0 0 8px; font-size: 15px; }
+.panel .notices .timeline-account h3 a { color: inherit; text-decoration: none; }
 .panel .notices time { margin-right: 8px; font-variant-numeric: tabular-nums; color: var(--muted); }
 /* Stage card: the booth card's shell, its accent the stage's colour. */
 .stage-panel h1 { color: var(--stage); }

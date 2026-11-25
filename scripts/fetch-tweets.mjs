@@ -76,9 +76,46 @@ await Promise.all(
     }
   }),
 );
+// User: "최근 타임라인" for every booth with official X accounts. FxTwitter's profile feed lists an account's newest
+// posts; keep the 5 newest that the account itself wrote (not replies, not reposts), crawl them like notices, and
+// write the per-handle id lists (newest first) to timelines.json.
+const handles = [...new Set(map.booths.flatMap((b) => b.xAccounts ?? []))];
+const timelines = {};
+const timelineOf = async (handle) => {
+  // fxtwitter answers some profile requests with a spurious non-2xx; retry with backoff, report only the last failure.
+  let r;
+  for (const wait of [1500, 4000, 0]) {
+    r = await fetch(`https://api.fxtwitter.com/2/profile/${handle}/statuses`);
+    if (r.ok) break;
+    if (wait) await new Promise((res) => setTimeout(res, wait));
+  }
+  if (!r.ok) throw new Error(`fxtwitter profile HTTP ${r.status} after 3 attempts: ${(await r.text()).slice(0, 200)}`);
+  const body = await r.json();
+  if (body.code !== 200) throw new Error(`fxtwitter profile code ${body.code}`);
+  const own = (body.results ?? []).filter((p) => p.type === "status" && p.author?.screen_name?.toLowerCase() === handle.toLowerCase() && !p.replying_to && !p.reposted_by);
+  own.sort((a, b) => (BigInt(b.id) > BigInt(a.id) ? 1 : -1));
+  const got = [];
+  for (const p of own.slice(0, 5)) if (tweets[p.id] || (await crawl(p.id))) got.push(p.id);
+  if (!got.length) throw new Error("no original posts (empty feed, suspended or only replies/reposts)");
+  return got;
+};
+const queue = [...handles];
+await Promise.all(
+  Array.from({ length: 4 }, async () => {
+    for (let h; (h = queue.shift()); ) {
+      try {
+        timelines[h] = await timelineOf(h);
+      } catch (e) {
+        failed.push(`@${h}\ttimeline not fetched: ${e.message}`);
+      }
+    }
+  }),
+);
 const threaded = ids.filter((id) => tweets[id]?.thread_ids);
 console.log(`threads: ${threaded.map((id) => `${id} +${tweets[id].thread_ids.length}`).join(", ") || "none"}`);
 const sorted = Object.fromEntries(Object.entries(tweets).sort(([a], [b]) => a.localeCompare(b)));
 writeFileSync(join(dir, "tweets.json"), JSON.stringify(sorted));
+writeFileSync(join(dir, "timelines.json"), JSON.stringify(timelines));
+console.log(`timelines.json: ${Object.keys(timelines).length} of ${handles.length} accounts, ${Object.values(timelines).flat().length} posts`);
 console.log(`tweets.json: ${Object.keys(sorted).length} posts (${ids.length} notices)`);
 if (failed.length) console.log(`not crawled (the card links to these instead):\n${failed.join("\n")}`);

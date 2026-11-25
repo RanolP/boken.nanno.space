@@ -10,6 +10,7 @@ export const meta: MapMeta = {
   logo: "/maps/agf-2026/logo.png",
   showsExhibitorLogos: true,
   loadTweets: () => import("./tweets.json").then((m) => m.default as unknown as Record<string, Tweet>),
+  loadTimelines: () => import("./timelines.json").then((m) => m.default as Record<string, string[]>),
   loadStages: () => import("./stages.json").then((m) => m.default as Stages),
   credits: [
     {
@@ -55,6 +56,13 @@ export const meta: MapMeta = {
       source_url: "https://x.com",
       license_or_terms: "© 각 게시물 작성자 / © each post's author",
       usage_note: "게시물 원문을 그대로 보여주며 각 카드에서 원본 게시물로 연결됩니다. / Posts are shown as published and link to the original on X.",
+    },
+    {
+      what: "부스 공식 X 계정 최근 게시물 / Recent posts of booths' official X accounts",
+      holder: "각 게시물 작성 계정 / each posting account",
+      source_url: "https://x.com",
+      license_or_terms: "© 각 게시물 작성자 / © each post's author",
+      usage_note: "각 계정의 최근 원본 게시물(답글·리포스트 제외)을 그대로 보여주며 원본 게시물로 연결됩니다. / Each account's latest original posts (no replies or reposts) are shown as published and link to the original on X.",
     },
     {
       what: "스테이지 타임테이블 (RED/BLUE STAGE) / Stage timetables",

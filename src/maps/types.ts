@@ -47,8 +47,8 @@ export type MapData = {
     intro?: string;
     /** Exhibitor homepage URL from the same official list, written by `npm run exhibitors`. */
     homepage?: string;
-    /** Official X handle (no @), found from the exhibitor's homepage link or a verified bio. */
-    xAccount?: string;
+    /** Official X handles (no @), most relevant first; each found from the exhibitor's homepage link or a verified bio. */
+    xAccounts?: string[];
     /** The exhibitor's own X posts about its AGF booth, newest first. */
     notices?: { url: string; date?: string; summary?: string }[];
   }[];
@@ -89,6 +89,8 @@ export type MapMeta = {
   showsExhibitorLogos?: boolean;
   /** Crawled notice posts keyed by status id (`npm run tweets`); loaded on first card open to keep them out of the main bundle. */
   loadTweets?: () => Promise<Record<string, Tweet>>;
+  /** Each official X account's recent own posts, as status ids newest first (`npm run tweets`); loaded with the tweets. */
+  loadTimelines?: () => Promise<Record<string, string[]>>;
   /** Official stage timetables (`npm run stages`); loaded when a stage card first opens. */
   loadStages?: () => Promise<Stages>;
 };

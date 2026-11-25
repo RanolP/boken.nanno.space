@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState, type RefObject } from "react";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
 import { stageKey, stageOfArea, type AreaKind, type MapData } from "../maps/types";
@@ -24,6 +24,8 @@ interface Props {
   flyKey: number;
   view: ViewMode;
   input: MoveInput;
+  /** Camera position on the floor, shared by both rigs (and the road-view minimap) so a view switch keeps the spot. */
+  pose: RefObject<Pose | null>;
   onSelect: (code: string | null) => void;
 }
 
@@ -49,8 +51,7 @@ interface FloorProps {
   visible: boolean;
 }
 
-export const Scene = ({ data, booths, selected, flyKey, view, input, onSelect }: Props) => {
-  const pose = useRef<Pose | null>(startPose(data));
+export const Scene = ({ data, booths, selected, flyKey, view, input, pose, onSelect }: Props) => {
   const W = data.source.widthPx * data.metersPerPx;
   const D = data.source.heightPx * data.metersPerPx;
   // Keyed on data.markers itself: a fresh [] each render would reload every image.
@@ -451,7 +452,7 @@ const usePlanImages = (urls: string[]) => {
 
 /* ---------------------------------------------------------------- style ---------------------------------------------------------------- */
 
-const AREA_STYLE: Record<AreaKind, { h: number; color: string }> = {
+export const AREA_STYLE: Record<AreaKind, { h: number; color: string }> = {
   stage: { h: 0.8, color: "#c9a0ff" },
   seating: { h: 0.3, color: "#9fb4c7" },
   facility: { h: 0.3, color: "#b8b8b8" },
@@ -464,7 +465,7 @@ const AREA_STYLE: Record<AreaKind, { h: number; color: string }> = {
 /** Floor colour, the surface under hall labels and floor markings. */
 const FLOOR = "#ffffff";
 /** Opening pose: 3 m inside Hall 1's lobby entrance, facing into the hall (-z). Null without CAD structure. */
-const startPose = (data: MapData): Pose | null => {
+export const startPose = (data: MapData): Pose | null => {
   const s = data.structure;
   const hall1 = s?.halls?.find((h) => h.id === "hall1");
   if (!s || !hall1) return null;

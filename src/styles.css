@@ -259,6 +259,11 @@ body { background: var(--bg); color: var(--fg); }
 .road-tp-hint svg { flex: none; fill: #fff; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .road-dot { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; pointer-events: none; background: #fff; box-shadow: 0 0 0 1px #000a; }
 .road-donut { width: 16px; height: 16px; margin: -8px 0 0 -8px; background: none; border: 2px solid #fff; box-sizing: border-box; box-shadow: 0 0 0 1px #000a, inset 0 0 0 1px #000a; }
+/* Road view minimap, bottom right: a round window on the plan, framed like the booth probe. */
+.minimap { position: absolute; right: 12px; bottom: 12px; width: 200px; height: 200px; border-radius: 50%; box-shadow: 0 0 0 3px #14161ce6, 0 0 0 4px #5b4fd6, 0 4px 12px #0004; pointer-events: none; }
+@media (max-width: 700px) {
+  .minimap { width: 128px; height: 128px; }
+}
 .move-pad { display: none; position: absolute; left: 12px; bottom: 12px; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 4px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .move-pad button { border: 1px solid var(--line); border-radius: 12px; background: #fffd; font-size: 18px; color: var(--fg); touch-action: none; }
 .move-pad button:active { background: #dfe4ec; }

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { findMap, maps, type MapEntry } from "./maps";
 import { useHashId } from "./hash";
 import { CreditsPage } from "./credits/Credits";
-import { Scene } from "./venue-view/Scene";
+import { Scene, startPose } from "./venue-view/Scene";
+import { Minimap } from "./venue-view/Minimap";
 import { Panel, preloadTweets } from "./booth-finder/Panel";
 import { Search } from "./booth-finder/Search";
 import { StagePanel } from "./booth-finder/StagePanel";
@@ -10,7 +11,7 @@ import { stageOfKey } from "./maps/types";
 import { Legend } from "./booth-finder/Legend";
 import { DebugHud } from "./venue-view/DebugInspector";
 import { BoothProbe, MovePad, RoadHud, ViewToggle } from "./venue-view/ViewControls";
-import { isTypingTarget, useMoveKeys, type MoveInput, type ViewMode } from "./venue-view/walk";
+import { isTypingTarget, useMoveKeys, type MoveInput, type Pose, type ViewMode } from "./venue-view/walk";
 
 export const App = () => {
   const hashId = useHashId();
@@ -35,6 +36,7 @@ const MapView = ({ entry }: MapViewProps) => {
   const [flyKey, setFlyKey] = useState(0);
   const [view, setView] = useState<ViewMode>("road");
   const [input] = useState<MoveInput>(() => new Set());
+  const pose = useRef<Pose | null>(startPose(data));
   useMoveKeys(input);
   // Crawled notice posts load in the background as the map opens, so a booth card draws its embeds on first paint.
   useEffect(() => {
@@ -100,6 +102,7 @@ const MapView = ({ entry }: MapViewProps) => {
           flyKey={flyKey}
           view={view}
           input={input}
+          pose={pose}
           onSelect={setSelected}
         />
         <div className="overlay">
@@ -126,6 +129,7 @@ const MapView = ({ entry }: MapViewProps) => {
         {view === "road" && <DebugHud />}
         {view === "road" && <RoadHud panelOpen={selectedBooth !== null || selectedStage !== null} />}
         {view === "road" && <BoothProbe data={data} />}
+        {view === "road" && <Minimap data={data} booths={visible} selected={selected} pose={pose} />}
         {view === "road" && (shownBooth || shownStage) && <div className={closing || stageClosing ? "panel-dim closing" : "panel-dim"} aria-hidden onClick={closePanel} />}
         {shownBooth && (
           <Panel

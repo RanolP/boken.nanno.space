@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
@@ -11,7 +11,6 @@ import { Booths, FONT, buildAtlas, useLabelFont, type Tile } from "./BoothFrame"
 import { DebugProbe, debug } from "./DebugInspector";
 import { inkOn, type Ink } from "./contrast";
 import type { MoveInput, Pose, ViewMode } from "./walk";
-import { ATLAS_MAX, MAX_ANISOTROPY, MAX_DPR, MIN_DPR } from "./quality";
 
 type Booth = MapData["booths"][number];
 type Area = MapData["areas"][number];
@@ -61,20 +60,18 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, pose, onSel
   const images = usePlanImages(urls);
   const fontReady = useLabelFont();
   const decals = useMemo(() => floorDecals(data, images, fontReady), [data, images, fontReady]);
-  // Render resolution follows the frame rate: PerformanceMonitor lowers it toward MIN_DPR while frames are slow and
-  // raises it back when they recover, in quarter steps so a resize does not happen on every small change.
+  // User: "too blurry on mobile". Distance already degrades textures where it should, per pixel (mipmaps plus
+  // anisotropic filtering), so the render resolution never drops below one device pixel per CSS pixel: PerformanceMonitor
+  // trades it between that and MAX_DPR with the frame rate, in quarter steps so it does not resize on every small change.
   const [dpr, setDpr] = useState(MAX_DPR);
+  const droneSeen = useRef(false);
+  if (view !== "road") droneSeen.current = true;
   return (
     <Canvas
       className="canvas"
       dpr={dpr}
       camera={{ fov: 45, near: 0.5, far: 3000 }}
       aria-label="3D 지도 / 3D map"
-      onCreated={({ gl }) => {
-        // three clamps every texture's anisotropy to this at upload time, so one cap covers the hard-coded 16s too.
-        const cap = Math.min(MAX_ANISOTROPY, gl.capabilities.getMaxAnisotropy());
-        gl.capabilities.getMaxAnisotropy = () => cap;
-      }}
       onPointerMissed={() => onSelect(null)}
     >
       <PerformanceMonitor
@@ -90,7 +87,8 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, pose, onSel
         Drone only: road view's floor is HallInterior's, and a coplanar second plane z-fights it. The same decals
         (frame, hall labels, floor markings) are composited into that floor's own texture instead.
       */}
-      <Floor data={data} decals={decals} visible={view !== "road"} />
+      {/* Built the first time drone view shows and kept after: its plan atlas (~50 MB) is never seen from road view. */}
+      {droneSeen.current && <Floor data={data} decals={decals} visible={view !== "road"} />}
       <Building data={data} mode={view} />
       <BuildingDetails data={data} mode={view} />
       {view === "road" && <HallInterior data={data} decals={decals} />}
@@ -214,7 +212,7 @@ const AREA_KO: Record<AreaKind, string> = {
 };
 
 /** Longest canvas side for an area top, in texels. */
-const AREA_TEX_MAX = ATLAS_MAX / 2;
+const AREA_TEX_MAX = 2048;
 
 /** The area top: fill, then the plan images on it, then its label; null when there is nothing but the fill. */
 const areaCanvas = (a: Area, m: number, fill: string, markers: Marker[], images: Images | null, fontReady: boolean) => {
@@ -288,7 +286,7 @@ export type Decal = { x: number; y: number; w: number; h: number; draw: (ctx: Ca
 /** Atlas texels of each cell's surroundings drawn around it, so mip levels sample the true neighbour, not another tile. */
 const DECAL_GUTTER = 4;
 /** Longest cell side in source px, so long frame strips still shelf-pack into the atlas width. */
-const CELL_MAX = ATLAS_MAX / 2;
+const CELL_MAX = 2048;
 
 /**
  * The drone-view floor as one mesh. The plan rectangle is cut on every decal edge into a grid of cells; plain cells are
@@ -478,6 +476,10 @@ export const AREA_STYLE: Record<AreaKind, { h: number; color: string }> = {
   // Printed on the floor: drawn into the floor mesh, no box, and walk.ts lets you walk over it.
   "floor-marking": { h: 0, color: "#ffffff" },
 };
+
+/** Render resolution range, device pixels per CSS pixel: past 2x the extra sharpness is hard to see but its fill cost on a 3x phone is not. */
+const MAX_DPR = Math.min(window.devicePixelRatio || 1, 2);
+const MIN_DPR = Math.min(MAX_DPR, 1);
 
 /** Floor colour, the surface under hall labels and floor markings. */
 const FLOOR = "#ffffff";

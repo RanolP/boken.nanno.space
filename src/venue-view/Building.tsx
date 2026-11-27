@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
-import { LOW_POWER } from "./quality";
 import type { MapData } from "../maps/types";
 import type { ViewMode } from "./walk";
 import { CAD_ONLY } from "./HallInterior";
@@ -161,8 +160,7 @@ const PANEL_LINE = "#8f8b83";
 /** User layout: the band (floor to door height) is WALL_PANEL_ROWS equal rows; the top row is split into WALL_PANEL_TOP_SUBROWS equal rows. V spans the band, so rows scale with h. */
 const WALL_PANEL_ROWS = 5;
 const WALL_PANEL_TOP_SUBROWS = 10;
-// Phones: half the texels (a quarter of the memory and of the per-pixel weathering pass at load).
-const PANEL_PX_PER_M = LOW_POWER ? 128 : 256;
+const PANEL_PX_PER_M = 256;
 const PANEL_LINE_PX = 2;
 const PANEL_NOISE_DOTS = 500;
 /** User: the ivory band below gets a vertical seam every 2.5 ochre tiles. The canvas spans BAKE_PERIOD_TILES tiles (the first whole multiple of 2.5) so both patterns repeat. */

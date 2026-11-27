@@ -156,8 +156,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     return t;
   }, []);
   const tpMark = useRef({ key: "", t: 0 });
-  // Touch tap on the floor: the walker glides to this spot (stick input cancels it; `until` gives up when a wall stalls it).
-  const glide = useRef<{ x: number; z: number; until: number } | null>(null);
+  // Touch tap on the floor: a short dash from (x0, z0) to (x, z) starting at t0 (performance.now() s). The stick does
+  // not cancel it, so a tap works while walking; walking resumes when it lands.
+  const glide = useRef<{ x0: number; z0: number; x: number; z: number; t0: number } | null>(null);
   // The booth panel is open while a booth is selected: walking and teleporting stop until it is closed (right click).
   const panelOpen = useRef(selected !== null);
   panelOpen.current = selected !== null;
@@ -214,11 +215,10 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     // sx/sy/t: where and when the press started; far: the farthest it has strayed, so a drag that comes back is no tap.
     let drag: { id: number; x: number; y: number; sx: number; sy: number; t: number; far: number; touch: boolean } | null = null;
     let lastType = "mouse";
-    // A touch press that qualified as a tap, acted on at its click (see lockClick).
-    let tapPending: { x: number; y: number } | null = null;
+    // Event timestamp until which the click a touch tap may still produce is swallowed (see lockClick).
+    let swallowUntil = -Infinity;
     const down = (e: PointerEvent) => {
       lastType = e.pointerType;
-      tapPending = null;
       if (document.pointerLockElement === el && e.button === 0) {
         teleport();
         return;
@@ -263,7 +263,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         return;
       }
       const to = lookFloorSpot(w, yaw, pitch, eye, obstacles, W, D);
-      if (to) glide.current = { ...to, until: performance.now() / 1000 + GLIDE_MAX_S };
+      if (to) glide.current = { x0: w.x, z0: w.z, ...to, t0: performance.now() / 1000 };
     };
     // Pointer lock: the first click on the canvas captures the mouse, then movement alone turns the view (same sensitivity
     // and pitch clamp as the drag). Esc releases it (browser default). The locking click is swallowed here (stopPropagation
@@ -307,14 +307,12 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         e.stopPropagation();
         return;
       }
-      // Touch: the tap acts here, on its click, not on pointerup. Acting on pointerup opened the card's backdrop
-      // (.panel-dim) under the finger before the browser hit-tested the click, and the click then closed the card.
-      // Never lock (phones have no pointer lock), and keep the click from R3F, which would take it as a miss.
-      if (e.target === el && lastType !== "mouse") {
+      // Touch: the tap already acted on pointerup (browsers send no click for a tap while another finger, such as the
+      // stick's, is down). The click a lone tap still produces would land on the card backdrop (.panel-dim) that tap just
+      // opened and close it, or reach R3F as a miss: swallow it. Never lock (phones have no pointer lock).
+      if (lastType !== "mouse" && (e.target === el || e.timeStamp < swallowUntil)) {
         e.stopPropagation();
-        const t = tapPending;
-        tapPending = null;
-        if (t) tapAt(t.x, t.y);
+        e.preventDefault();
         return;
       }
       // Open card: the click that follows the opening press lands on the now-unlocked canvas and must not re-lock it.
@@ -346,7 +344,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       if (drag?.id !== e.pointerId) return;
       const tap = drag.touch && drag.far < TAP_SLOP_PX && e.timeStamp - drag.t < TAP_MS;
       drag = null;
-      tapPending = tap ? { x: e.clientX, y: e.clientY } : null;
+      if (!tap) return;
+      swallowUntil = e.timeStamp + TAP_CLICK_MS;
+      tapAt(e.clientX, e.clientY);
     };
     const cancel = (e: PointerEvent) => {
       if (drag?.id === e.pointerId) drag = null;
@@ -407,21 +407,18 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     const { f, s } = panelOpen.current ? { f: 0, s: 0 } : moveAxes(input);
     const x0 = w.x;
     const z0 = w.z;
-    const g = glide.current;
-    const gliding = g !== null && !f && !s && !panelOpen.current && performance.now() / 1000 < g.until;
-    if (gliding) {
-      // Fast at first and easing in, at least running pace, so a far tap does not take seconds.
-      const dx = g.x - w.x;
-      const dz = g.z - w.z;
-      const d = Math.hypot(dx, dz);
-      const step = Math.min(d, Math.max(RUN, d * GLIDE_RATE) * dt);
-      if (d > 1e-3) {
-        w.x += (dx / d) * step;
-        w.z += (dz / d) * step;
-      }
-      if (d - step < 0.02) glide.current = null;
+    const g = panelOpen.current ? null : glide.current;
+    const gliding = g !== null;
+    if (g) {
+      // Fixed-length dash with an ease-out (cubic), the same for a near and a far tap. lookFloorSpot already marched
+      // the straight path clear, so the dash only interpolates; collide below still keeps it off anything new.
+      const k = Math.min(1, (performance.now() / 1000 - g.t0) / DASH_S);
+      const e = 1 - (1 - k) ** 3;
+      w.x = g.x0 + (g.x - g.x0) * e;
+      w.z = g.z0 + (g.z - g.z0) * e;
+      if (k === 1) glide.current = null;
     } else glide.current = null;
-    if (f || s) {
+    if ((f || s) && !gliding) {
       bob.run = isRunning(input);
       // (f, s) is at most length 1: full speed on keys or a fully pushed stick, slower for a partly pushed one.
       const speed = bob.run ? RUN : WALK;
@@ -586,9 +583,10 @@ const tapNdc = new THREE.Vector2();
 const TAP_SLOP_PX = 10;
 // Event timestamps, not handler time: a janky frame that delays pointerup must not turn a tap into a long press.
 const TAP_MS = 600;
-// Tap glide: speed is GLIDE_RATE x the remaining distance per second (at least RUN), stopped after GLIDE_MAX_S if blocked.
-const GLIDE_RATE = 5;
-const GLIDE_MAX_S = 2;
+// After a touch tap acts, its own click (sent up to ~300 ms later) is swallowed for this long.
+const TAP_CLICK_MS = 700;
+// Tap dash length in seconds: quick enough to feel like the desktop teleport, long enough to see where you went.
+const DASH_S = 0.3;
 const aimOrigin = new THREE.Vector3();
 const aimDir = new THREE.Vector3();
 const TP_SCALE_FROM_M = 4;

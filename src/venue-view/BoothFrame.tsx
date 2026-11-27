@@ -8,7 +8,6 @@ import { useAimBooth } from "./roadInteract";
 import { faceWalker } from "./labelFit";
 import { INK_DARK, INK_LIGHT, WALLS, inkOn, logoPlate, logoSamples, type Ink } from "./contrast";
 import { POST_M, boothPosts, rectOf, type ViewMode } from "./walk";
-import { ATLAS_MAX } from "./quality";
 
 /**
  * Booths, drawn the standard way for text on a surface: every surface that carries text or a logo is ONE opaque mesh
@@ -59,7 +58,7 @@ const SIGN_W = 6;
 const FASCIA_DENSITY = 256;
 const TOP_DENSITY = 64;
 const SIGN_DENSITY = 96;
-const ATLAS_W = ATLAS_MAX;
+const ATLAS_W = 4096;
 /** Texels of the tile's own background drawn around it, so mip levels do not bleed a neighbour in. */
 const GUTTER = 6;
 
@@ -631,9 +630,7 @@ export const buildAtlas = (gl: THREE.WebGLRenderer, density: number, make: (dens
       row = Math.max(row, h);
     }
     const H = y + row;
-    // A tile wider than the atlas would be cut off at its right edge (the smaller ATLAS_MAX on phones meets long floor cells).
-    const widest = Math.max(...tiles.map((t) => t.w + 2 * GUTTER));
-    if ((H > ATLAS_W || widest > ATLAS_W) && dens > 4) continue;
+    if (H > ATLAS_W && dens > 4) continue;
     const canvas = Object.assign(document.createElement("canvas"), { width: ATLAS_W, height: Math.ceil(H / 4) * 4 });
     const ctx = canvas.getContext("2d")!;
     tiles.forEach((t, i) => {
@@ -652,9 +649,15 @@ export const buildAtlas = (gl: THREE.WebGLRenderer, density: number, make: (dens
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = gl.capabilities.getMaxAnisotropy();
+    // Never redrawn, so the canvas is freed once the GPU has the texture: mobile Safari caps the total canvas memory a
+    // page holds (a few hundred MB), and these atlases are 30 to 50 MB each.
+    const [cw, ch] = [canvas.width, canvas.height];
+    tex.onUpdate = () => {
+      canvas.width = canvas.height = 0;
+    };
     const uv =
       (i: number): UvOf =>
-      (fx, fy) => [(at[i].x + fx * tiles[i].w) / canvas.width, 1 - (at[i].y + fy * tiles[i].h) / canvas.height];
+      (fx, fy) => [(at[i].x + fx * tiles[i].w) / cw, 1 - (at[i].y + fy * tiles[i].h) / ch];
     return { tex, uv, dens };
   }
 };

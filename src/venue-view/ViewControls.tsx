@@ -492,7 +492,15 @@ export const TouchControls = ({ input }: TouchControlsProps) => {
           className="touch-btn touch-run"
           aria-pressed={run}
           aria-label="달리기 / Run"
-          onClick={() => {
+          // On press, not click: browsers send no click for a tap while another finger (the stick's) is down.
+          // A keyboard press (detail 0) still toggles through click.
+          onPointerDown={(e) => {
+            e.preventDefault();
+            input.run = !input.run;
+            setRun(input.run);
+          }}
+          onClick={(e) => {
+            if (e.detail !== 0) return;
             input.run = !input.run;
             setRun(input.run);
           }}

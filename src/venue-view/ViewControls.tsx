@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useRef, type CSSProperties, type PointerEvent } from "react";
-import type { MoveInput, MoveKey, ViewMode } from "./walk";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import type { MoveInput, ViewMode } from "./walk";
 import { useAimBooth, useAimDoorOpen, useAimStage, usePointerLocked, useTeleportable } from "./roadInteract";
 import type { MapData } from "../maps/types";
 import { STAGE } from "../booth-finder/StagePanel";
@@ -9,7 +9,7 @@ interface ViewToggleProps {
   onChange: (view: ViewMode) => void;
 }
 
-interface MovePadProps {
+interface TouchControlsProps {
   input: MoveInput;
 }
 
@@ -60,16 +60,49 @@ export const RoadHud = ({ panelOpen }: RoadHudProps) => {
   );
 };
 
-const ROAD_HELP_KEY = "boken.roadHelp.hidden";
-const roadHelpHidden = () => {
-  try {
-    return localStorage.getItem(ROAD_HELP_KEY) === "1";
-  } catch {
-    return false;
-  }
-};
 /** Shown once per page visit, so re-entering road view after closing it does not reopen it. */
 let roadHelpShown = false;
+
+/**
+ * Road-view tutorial modal: opens once per visit when `media` matches (keyboard help for a mouse, touch help for a
+ * finger), unless its "다음엔 보여주지 않기" box was ticked before (remembered under `storageKey`).
+ */
+const HelpDialog = ({ storageKey, media, className, children }: { storageKey: string; media: string; className?: string; children: ReactNode }) => {
+  const dialog = useRef<HTMLDialogElement>(null);
+  const skip = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    let hidden = false;
+    try {
+      hidden = localStorage.getItem(storageKey) === "1";
+    } catch {
+      // Private mode: nothing stored, so it shows.
+    }
+    if (roadHelpShown || !matchMedia(media).matches || hidden) return;
+    roadHelpShown = true;
+    dialog.current?.showModal();
+  }, [storageKey, media]);
+  const close = () => {
+    if (skip.current?.checked) {
+      try {
+        localStorage.setItem(storageKey, "1");
+      } catch {
+        // Private mode: the box just lasts for this visit.
+      }
+    }
+  };
+  return (
+    <dialog ref={dialog} className={className ? `road-help ${className}` : "road-help"} onClose={close}>
+      {children}
+      <label>
+        <input ref={skip} type="checkbox" />
+        다음엔 보여주지 않기
+      </label>
+      <button type="button" onClick={() => dialog.current?.close()}>
+        확인
+      </button>
+    </dialog>
+  );
+};
 
 /**
  * Left section of a real keyboard, in key units (u) from its left edge: Tab 1.5u, Caps 1.75u, Shift 2.25u, Ctrl/Win/Alt 1.25u,
@@ -147,25 +180,9 @@ const PANO_DOTS = (() => {
   return dots;
 })();
 
-const RoadHelp = () => {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const skip = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (roadHelpShown || !matchMedia("(pointer: fine)").matches || roadHelpHidden()) return;
-    roadHelpShown = true;
-    dialog.current?.showModal();
-  }, []);
-  const close = () => {
-    if (skip.current?.checked) {
-      try {
-        localStorage.setItem(ROAD_HELP_KEY, "1");
-      } catch {
-        // Private mode: the box just lasts for this visit.
-      }
-    }
-  };
-  return (
-    <dialog ref={dialog} className="road-help" onClose={close}>
+const RoadHelp = () => (
+    <>
+    <HelpDialog storageKey="boken.roadHelp.hidden" media="(pointer: fine)">
       <div className="road-help-main">
       <div className="kb" style={{ "--u": `${KB_U}px` } as CSSProperties} aria-label="W A S D 이동, Shift 달리기, Space 점프, Esc 나가기">
         {KB_KEYS.map((k) => (
@@ -229,16 +246,110 @@ const RoadHelp = () => {
         </g>
       </svg>
       </div>
-      <label>
-        <input ref={skip} type="checkbox" />
-        다음엔 보여주지 않기
-      </label>
-      <button type="button" onClick={() => dialog.current?.close()}>
-        확인
-      </button>
-    </dialog>
-  );
-};
+    </HelpDialog>
+    <TouchHelp />
+    </>
+);
+
+/** Drag-to-look screen: the desktop help's panorama monitor redrawn as a phone on its side, a fingertip in place of the mouse. */
+const LookScreen = () => (
+  <svg className="look" viewBox="0 0 96 50" width="96" height="50" aria-hidden>
+    <clipPath id="touch-look-screen">
+      <rect x="9" y="5" width="78" height="38" />
+    </clipPath>
+    <rect className="phone" x="3" y="1" width="90" height="46" rx="7" />
+    <rect className="look-screen-bg" x="9" y="5" width="78" height="38" />
+    <g clipPath="url(#touch-look-screen)">
+      <g className="look-pan">
+        <g className="look-motif">
+          {PANO_DOTS.map((d) => (
+            <circle key={d.key} className={d.pink ? "pk" : "nv"} cx={d.x} cy={d.y + 2} r={d.r} />
+          ))}
+        </g>
+      </g>
+    </g>
+    <g className="look-mouse">
+      <circle className="finger" cx="48" cy="27" r="7" />
+    </g>
+  </svg>
+);
+
+/**
+ * User: "tutorial shall be modern like desktop does": the touch counterpart of the keyboard help, in its card and
+ * colours, each control drawn and animated (stick, drag to look, tap to act) with the run and jump buttons as they look.
+ */
+const TouchHelp = () => (
+  <HelpDialog storageKey="boken.touchHelp.hidden" media="(pointer: coarse)" className="touch-help">
+    <div className="touch-help-grid">
+      <figure>
+        {/* The floating stick: base, knob pushed round the four directions. */}
+        <svg viewBox="0 0 96 96" width="96" height="96" aria-hidden>
+          <circle className="stick-ring" cx="48" cy="48" r="34" />
+          <path className="stick-ticks" d="M48 18l-4 5h8zM48 78l-4-5h8zM18 48l5-4v8zM78 48l-5-4v8z" />
+          <circle className="stick-knob-anim" cx="48" cy="48" r="14" />
+        </svg>
+        <figcaption>
+          <strong>이동</strong>
+          왼쪽 아래를 누르고 밀기
+        </figcaption>
+      </figure>
+      <figure>
+        <LookScreen />
+        <figcaption>
+          <strong>둘러보기</strong>
+          화면을 끌기
+        </figcaption>
+      </figure>
+      <figure>
+        {/* Tap: the finger lands on the floor ahead, a ripple, then the teleport ring and its light pillar where it lands. */}
+        <svg className="tap" viewBox="0 0 96 64" width="96" height="64" aria-hidden>
+          <path className="floor" d="M4 62L40 18h16l36 44" />
+          <path className="floor-mid" d="M48 18v44" />
+          <g className="tap-mark">
+            <rect className="pillar" x="41" y="16" width="14" height="22" />
+            <ellipse className="ring" cx="48" cy="38" rx="9" ry="3" />
+          </g>
+          <circle className="tap-ripple" cx="48" cy="38" r="8" />
+          <circle className="finger tap-finger" cx="48" cy="38" r="7" />
+        </svg>
+        <figcaption>
+          <strong>탭하기</strong>
+          바닥은 그곳으로 이동
+          <br />
+          부스·무대는 정보, 문은 여닫기
+        </figcaption>
+      </figure>
+      <figure className="touch-help-buttons">
+        <div aria-hidden>
+          <span className="touch-btn touch-jump">
+            <JumpIcon />
+          </span>
+          <span className="touch-btn touch-run">
+            <RunIcon />
+            <span>달리기</span>
+          </span>
+        </div>
+        <figcaption>
+          <strong>달리기 · 점프</strong>
+          달리기는 눌러서 켜고 끄기
+        </figcaption>
+      </figure>
+    </div>
+  </HelpDialog>
+);
+
+const RunIcon = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+    <circle cx="15" cy="4.5" r="2.2" />
+    <path d="M9 21l2.2-5.2 2.6 2.2V22M13.8 18l1-4.6-3.6-3.4 1.4-3.5L9 8 7 11.5M14.8 13.4L17 15.5 20.5 14.5M12.6 6.5l3.6 1.8 1.5 3" />
+  </svg>
+);
+
+const JumpIcon = () => (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden>
+    <path d="M12 4l-7 8h4.5v7h5v-7H19z" />
+  </svg>
+);
 
 interface BoothProbeProps {
   data: MapData;
@@ -281,39 +392,127 @@ export const BoothProbe = ({ data }: BoothProbeProps) => {
   );
 };
 
-/** Hold-to-walk buttons for touch screens, which have no WASD; CSS shows it only for coarse pointers. */
-export const MovePad = ({ input }: MovePadProps) => {
+/**
+ * Touch screens, which have no WASD (CSS shows it only for coarse pointers): a stick at the bottom left (walk speed
+ * follows how far it is pushed), and run (a toggle) and jump buttons at the bottom right above the minimap.
+ * Looking around (drag) and interacting (tap) happen on the canvas itself, in RoadRig.
+ */
+export const TouchControls = ({ input }: TouchControlsProps) => {
+  const base = useRef<HTMLDivElement>(null);
+  const knob = useRef<HTMLDivElement>(null);
+  const stickId = useRef<number | null>(null);
+  // Floating stick: its centre is where the thumb landed in the zone (client px), so the thumb never has to find it.
+  const centre = useRef({ x: 0, y: 0 });
+  const [run, setRun] = useState(input.run);
   // Unmounting mid-hold (switching view) never sends pointerup.
-  useEffect(() => () => PAD.forEach((p) => input.delete(p.key)), [input]);
-  const hold = (key: MoveKey) => ({
-    onPointerDown: (e: PointerEvent<HTMLButtonElement>) => {
-      e.currentTarget.setPointerCapture(e.pointerId);
-      input.add(key);
+  useEffect(
+    () => () => {
+      input.stick.f = input.stick.s = 0;
+      input.jump.held = false;
     },
-    onPointerUp: () => input.delete(key),
-    onPointerCancel: () => input.delete(key),
-    onLostPointerCapture: () => input.delete(key),
-    onContextMenu: (e: { preventDefault: () => void }) => e.preventDefault(),
-  });
+    [input],
+  );
+
+  const aim = (e: PointerEvent<HTMLDivElement>) => {
+    let dx = (e.clientX - centre.current.x) / STICK_TRAVEL_PX;
+    let dy = (e.clientY - centre.current.y) / STICK_TRAVEL_PX;
+    const len = Math.hypot(dx, dy);
+    if (len > 1) {
+      dx /= len;
+      dy /= len;
+    }
+    // Dead zone at the centre, then the rest rescaled to 0..1 so the speed starts from zero past it.
+    const mag = Math.min(1, len);
+    const k = mag < STICK_DEAD ? 0 : (mag - STICK_DEAD) / (1 - STICK_DEAD) / (mag || 1);
+    input.stick.f = -dy * k;
+    input.stick.s = dx * k;
+    if (knob.current) knob.current.style.transform = `translate(${dx * STICK_TRAVEL_PX}px, ${dy * STICK_TRAVEL_PX}px)`;
+  };
+  const release = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerId !== stickId.current) return;
+    stickId.current = null;
+    input.stick.f = input.stick.s = 0;
+    if (knob.current) knob.current.style.transform = "";
+    if (base.current) base.current.style.cssText = "";
+    e.currentTarget.classList.remove("active");
+  };
+  const noMenu = (e: { preventDefault: () => void }) => e.preventDefault();
+
   return (
-    <div className="move-pad" role="group" aria-label="이동 / Move">
-      {PAD.map((p) => (
-        <button key={p.key} className={`pad-${p.key}`} aria-label={p.label} {...hold(p.key)}>
-          {p.glyph}
+    <>
+      <div
+        className="touch-ctl stick"
+        role="group"
+        aria-label="이동 / Move"
+        onPointerDown={(e) => {
+          if (stickId.current !== null) return;
+          stickId.current = e.pointerId;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          e.currentTarget.classList.add("active");
+          const r = e.currentTarget.getBoundingClientRect();
+          // Keep the whole base inside the zone, so a press at its very edge still has room to push outward.
+          const half = STICK_BASE_PX / 2;
+          const x = Math.min(Math.max(e.clientX - r.left, half), r.width - half);
+          const y = Math.min(Math.max(e.clientY - r.top, half), r.height - half);
+          centre.current = { x: r.left + x, y: r.top + y };
+          if (base.current) base.current.style.cssText = `left:${x - half}px;top:${y - half}px;bottom:auto`;
+          aim(e);
+        }}
+        onPointerMove={(e) => {
+          if (e.pointerId === stickId.current) aim(e);
+        }}
+        onPointerUp={release}
+        onPointerCancel={release}
+        onLostPointerCapture={release}
+        onContextMenu={noMenu}
+      >
+        <div ref={base} className="stick-base">
+          <div ref={knob} className="stick-knob" />
+        </div>
+      </div>
+      <div className="touch-ctl touch-actions">
+        <button
+          type="button"
+          className="touch-btn touch-jump"
+          aria-label="점프 / Jump"
+          onPointerDown={(e) => {
+            e.currentTarget.setPointerCapture(e.pointerId);
+            input.jump.held = true;
+            input.jump.pressedAt = performance.now() / 1000;
+          }}
+          onPointerUp={() => (input.jump.held = false)}
+          onPointerCancel={() => (input.jump.held = false)}
+          onLostPointerCapture={() => (input.jump.held = false)}
+          onContextMenu={noMenu}
+        >
+          <JumpIcon />
         </button>
-      ))}
-    </div>
+        <button
+          type="button"
+          className="touch-btn touch-run"
+          aria-pressed={run}
+          aria-label="달리기 / Run"
+          onClick={() => {
+            input.run = !input.run;
+            setRun(input.run);
+          }}
+          onContextMenu={noMenu}
+        >
+          <RunIcon />
+          <span>달리기</span>
+        </button>
+      </div>
+    </>
   );
 };
+
+/** Stick: how far (CSS px) the knob travels from the centre at full deflection, and the centre dead zone (fraction of it). */
+const STICK_TRAVEL_PX = 40;
+/** Base diameter; matches .stick-base in styles.css. */
+const STICK_BASE_PX = 128;
+const STICK_DEAD = 0.12;
 
 const VIEWS: { id: ViewMode; label: string }[] = [
   { id: "drone", label: "드론 뷰 / Drone view" },
   { id: "road", label: "로드뷰 / Road view" },
-];
-
-const PAD: { key: MoveKey; label: string; glyph: string }[] = [
-  { key: "forward", label: "앞으로 / Forward", glyph: "▲" },
-  { key: "left", label: "왼쪽 / Left", glyph: "◀" },
-  { key: "back", label: "뒤로 / Back", glyph: "▼" },
-  { key: "right", label: "오른쪽 / Right", glyph: "▶" },
 ];

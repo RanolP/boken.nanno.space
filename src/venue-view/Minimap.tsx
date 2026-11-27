@@ -29,12 +29,17 @@ export const Minimap = ({ data, booths, selected, pose }: MinimapProps) => {
     const c = canvas.current!;
     const ctx = c.getContext("2d")!;
     let raf = 0;
+    // Pose and size last drawn: standing still redraws nothing (a full-plan drawImage every frame adds up on phones).
+    let drawn = "";
     const frame = () => {
       raf = requestAnimationFrame(frame);
       const dpr = window.devicePixelRatio || 1;
       const n = Math.round(c.clientWidth * dpr);
-      if (c.width !== n) c.width = c.height = n;
       const p = pose.current;
+      const key = p ? `${n},${p.x},${p.z},${p.yaw}` : `${n}`;
+      if (key === drawn) return;
+      drawn = key;
+      if (c.width !== n) c.width = c.height = n;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.fillStyle = OUTSIDE;
       ctx.fillRect(0, 0, n, n);

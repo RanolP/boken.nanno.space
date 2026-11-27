@@ -6,8 +6,18 @@ type Booth = MapData["booths"][number];
 
 export type ViewMode = "drone" | "road";
 export type MoveKey = "forward" | "back" | "left" | "right" | "fast";
-/** Held movement keys, written by the keyboard and the touch pad and read by the camera rigs every frame. */
-export type MoveInput = Set<MoveKey>;
+/**
+ * Movement input, written by the keyboard and the touch controls and read by the camera rigs every frame.
+ * `stick` is the touch stick's deflection (forward, right), its length at most 1; `run` is the touch run toggle;
+ * `jump` is held (Space or the jump button) plus the time of the last press in performance.now() seconds.
+ */
+export type MoveInput = {
+  keys: Set<MoveKey>;
+  stick: { f: number; s: number };
+  run: boolean;
+  jump: { held: boolean; pressedAt: number };
+};
+export const newMoveInput = (): MoveInput => ({ keys: new Set(), stick: { f: 0, s: 0 }, run: false, jump: { held: false, pressedAt: -Infinity } });
 /** Floor point (world x/z, meters) and heading; yaw 0 faces -z (map north), positive turns left. */
 export type Pose = { x: number; z: number; yaw: number };
 /** Axis-aligned floor rectangle in world meters. */
@@ -77,15 +87,15 @@ export const useMoveKeys = (input: MoveInput) => {
     const onDown = (e: KeyboardEvent) => {
       const key = KEY_MAP[e.code];
       if (!key || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return;
-      input.add(key);
+      input.keys.add(key);
       if (key !== "fast") e.preventDefault();
     };
     const onUp = (e: KeyboardEvent) => {
       const key = KEY_MAP[e.code];
-      if (key) input.delete(key);
+      if (key) input.keys.delete(key);
     };
     // A key released while the window is unfocused never sends keyup; drop everything instead of walking forever.
-    const clear = () => input.clear();
+    const clear = () => input.keys.clear();
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
     window.addEventListener("blur", clear);
@@ -101,11 +111,17 @@ export const useMoveKeys = (input: MoveInput) => {
 export const isTypingTarget = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || t.closest("input, textarea, select") !== null);
 
-/** Forward/strafe axes in -1..1 from the held keys. */
-export const moveAxes = (input: MoveInput) => ({
-  f: (input.has("forward") ? 1 : 0) - (input.has("back") ? 1 : 0),
-  s: (input.has("right") ? 1 : 0) - (input.has("left") ? 1 : 0),
-});
+/** Forward/strafe axes from the held keys plus the touch stick, scaled down to length 1 (a diagonal is no faster). */
+export const moveAxes = (input: MoveInput) => {
+  const k = input.keys;
+  const f = (k.has("forward") ? 1 : 0) - (k.has("back") ? 1 : 0) + input.stick.f;
+  const s = (k.has("right") ? 1 : 0) - (k.has("left") ? 1 : 0) + input.stick.s;
+  const len = Math.hypot(f, s);
+  return len > 1 ? { f: f / len, s: s / len } : { f, s };
+};
+
+/** Shift held or the touch run button on. */
+export const isRunning = (input: MoveInput) => input.run || input.keys.has("fast");
 
 /**
  * Booth corner posts, raised areas you cannot walk onto (seating and photo zones stay walkable) and the hall walls.

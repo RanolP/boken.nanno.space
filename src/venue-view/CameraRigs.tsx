@@ -3,7 +3,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { stageKey, stageOfArea, type MapData, type StageId } from "../maps/types";
-import { isTypingTarget, collide, freeSpotNear, lookBooth, lookFloorSpot, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
+import { isRunning, isTypingTarget, collide, freeSpotNear, lookBooth, lookFloorSpot, moveAxes, obstaclesOf, rectAt, rectOf, spotFacing, type MoveInput, type Pose } from "./walk";
 import { DOOR_REACH_M, doorLeaves, getAimBooth, getAimDoor, setAimBooth, setAimDoor, setAimStage, setPointerLocked, setTeleportable, toggleDoor } from "./roadInteract";
 import { BOOTH_H } from "./BoothFrame";
 
@@ -91,8 +91,9 @@ export const DroneRig = ({ data, flyKey, selected, input, pose }: DroneRigProps)
     const { f, s } = moveAxes(input);
     if (f || s) {
       goal.current = null;
-      const speed = camera.position.distanceTo(c.target) * 0.3 * (input.has("fast") ? 3 : 1);
-      step.set(fwd.x * f - fwd.z * s, 0, fwd.z * f + fwd.x * s).normalize().multiplyScalar(speed * Math.min(dt, 0.1));
+      const speed = camera.position.distanceTo(c.target) * 0.3 * (isRunning(input) ? 3 : 1);
+      // fwd is unit length and (f, s) at most 1, so a half-pushed stick pans at half speed.
+      step.set(fwd.x * f - fwd.z * s, 0, fwd.z * f + fwd.x * s).multiplyScalar(speed * Math.min(dt, 0.1));
       const tx = THREE.MathUtils.clamp(c.target.x + step.x, 0, W);
       const tz = THREE.MathUtils.clamp(c.target.z + step.z, 0, D);
       step.set(tx - c.target.x, 0, tz - c.target.z);
@@ -155,14 +156,16 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     return t;
   }, []);
   const tpMark = useRef({ key: "", t: 0 });
+  // Touch tap on the floor: the walker glides to this spot (stick input cancels it; `until` gives up when a wall stalls it).
+  const glide = useRef<{ x: number; z: number; until: number } | null>(null);
   // The booth panel is open while a booth is selected: walking and teleporting stop until it is closed (right click).
   const panelOpen = useRef(selected !== null);
   panelOpen.current = selected !== null;
   const seenFly = useRef(flyKey);
   const bobRef = useRef({ phase: 0, amp: 0, run: false });
   // Jump: eye offset above EYE_H and its vertical speed. Times are performance.now() seconds.
-  // pressedAt buffers a press made just before landing; groundedAt gives coyote time; held repeats on landing.
-  const jumpRef = useRef({ y: 0, vy: 0, held: false, pressedAt: -Infinity, groundedAt: 0, used: false });
+  // input.jump.pressedAt buffers a press made just before landing; groundedAt gives coyote time; input.jump.held repeats on landing.
+  const jumpRef = useRef({ y: 0, vy: 0, groundedAt: 0, used: false });
   const reducedMotion = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)"), []);
 
   useLayoutEffect(() => {
@@ -189,11 +192,11 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     if (!import.meta.env.DEV) return;
     const w = window as unknown as { __boken?: unknown };
     // `eye` overrides eye height and roll so a photo-match check can stand exactly at a solved photo camera.
-    w.__boken = { view: "road", camera, scene, pitch, eye: devEye, get pose() { return walker.current; } };
+    w.__boken = { view: "road", camera, scene, gl, pitch, eye: devEye, get pose() { return walker.current; } };
     return () => {
       delete w.__boken;
     };
-  }, [camera, scene]);
+  }, [camera, scene, gl]);
 
   useLayoutEffect(() => {
     if (flyKey === seenFly.current) return;
@@ -208,14 +211,59 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
   // looks up). Positive yaw/pitch turn left/up, hence the minus. R3F's onClick ignores drags via ThreeEvent.delta.
   useEffect(() => {
     const el = gl.domElement;
-    let drag: { id: number; x: number; y: number } | null = null;
+    // sx/sy/t: where and when the press started; far: the farthest it has strayed, so a drag that comes back is no tap.
+    let drag: { id: number; x: number; y: number; sx: number; sy: number; t: number; far: number; touch: boolean } | null = null;
+    let lastType = "mouse";
+    // A touch press that qualified as a tap, acted on at its click (see lockClick).
+    let tapPending: { x: number; y: number } | null = null;
     const down = (e: PointerEvent) => {
+      lastType = e.pointerType;
+      tapPending = null;
       if (document.pointerLockElement === el && e.button === 0) {
         teleport();
         return;
       }
       if (document.pointerLockElement === el || drag || (e.pointerType === "mouse" && e.button !== 0)) return;
-      drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: e.timeStamp, far: 0, touch: e.pointerType !== "mouse" };
+    };
+    // User: touch has no crosshair, so a tap acts on the spot under the finger: the door, booth or stage there, else
+    // the walker glides to that floor spot. Same rules as the locked click, aimed along the tap's ray instead.
+    const tapAt = (cx: number, cy: number) => {
+      const r = el.getBoundingClientRect();
+      tapNdc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+      aimRay.setFromCamera(tapNdc, camera);
+      const dir = aimRay.ray.direction;
+      const yaw = Math.atan2(-dir.x, -dir.z);
+      const pitch = Math.asin(THREE.MathUtils.clamp(dir.y, -1, 1));
+      aimRay.far = DOOR_REACH_M;
+      let door: number | null = null;
+      let best = Infinity;
+      for (const leaf of doorLeaves) {
+        const hit = aimRay.intersectObject(leaf.object, true)[0];
+        if (hit && hit.distance < best) {
+          best = hit.distance;
+          door = leaf.i;
+        }
+      }
+      if (door !== null) {
+        toggleDoor(door);
+        return;
+      }
+      if (panelOpen.current) return;
+      const w = walker.current;
+      const eye = devEye.current?.h ?? EYE_H;
+      const bi = lookBooth(w, yaw, pitch, eye, BOOTH_H, obstacles, W, D);
+      if (bi !== null && booths[bi]) {
+        onSelect(booths[bi].code);
+        return;
+      }
+      const si = lookBooth(w, yaw, pitch, eye, BOOTH_H, stageAim.obs, W, D);
+      if (si !== null) {
+        onSelect(stageKey(stageAim.ids[si]));
+        return;
+      }
+      const to = lookFloorSpot(w, yaw, pitch, eye, obstacles, W, D);
+      if (to) glide.current = { ...to, until: performance.now() / 1000 + GLIDE_MAX_S };
     };
     // Pointer lock: the first click on the canvas captures the mouse, then movement alone turns the view (same sensitivity
     // and pitch clamp as the drag). Esc releases it (browser default). The locking click is swallowed here (stopPropagation
@@ -259,6 +307,16 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
         e.stopPropagation();
         return;
       }
+      // Touch: the tap acts here, on its click, not on pointerup. Acting on pointerup opened the card's backdrop
+      // (.panel-dim) under the finger before the browser hit-tested the click, and the click then closed the card.
+      // Never lock (phones have no pointer lock), and keep the click from R3F, which would take it as a miss.
+      if (e.target === el && lastType !== "mouse") {
+        e.stopPropagation();
+        const t = tapPending;
+        tapPending = null;
+        if (t) tapAt(t.x, t.y);
+        return;
+      }
       // Open card: the click that follows the opening press lands on the now-unlocked canvas and must not re-lock it.
       if (e.target !== el || panelOpen.current) return;
       e.stopPropagation();
@@ -273,6 +331,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     document.addEventListener("pointerlockchange", lockChange);
     const move = (e: PointerEvent) => {
       if (!drag || e.pointerId !== drag.id) return;
+      drag.far = Math.max(drag.far, Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy));
       if (panelOpen.current) {
         drag.x = e.clientX;
         drag.y = e.clientY;
@@ -284,12 +343,18 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       drag.y = e.clientY;
     };
     const up = (e: PointerEvent) => {
+      if (drag?.id !== e.pointerId) return;
+      const tap = drag.touch && drag.far < TAP_SLOP_PX && e.timeStamp - drag.t < TAP_MS;
+      drag = null;
+      tapPending = tap ? { x: e.clientX, y: e.clientY } : null;
+    };
+    const cancel = (e: PointerEvent) => {
       if (drag?.id === e.pointerId) drag = null;
     };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
+    window.addEventListener("pointercancel", cancel);
     return () => {
       window.removeEventListener("click", lockClick, true);
       window.removeEventListener("mousemove", lockMove);
@@ -299,9 +364,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
+      window.removeEventListener("pointercancel", cancel);
     };
-  }, [gl, obstacles, onSelect]);
+  }, [gl, camera, booths, obstacles, stageAim, onSelect]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -309,18 +374,17 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       if (e.code === "Space") {
         e.preventDefault();
         if (e.repeat) return;
-        const j = jumpRef.current;
-        j.held = true;
-        j.pressedAt = performance.now() / 1000;
+        input.jump.held = true;
+        input.jump.pressedAt = performance.now() / 1000;
         return;
       }
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code === "Space") jumpRef.current.held = false;
+      if (e.code === "Space") input.jump.held = false;
     };
     // A key released while the window is unfocused never sends keyup; stop hold-repeat instead of hopping forever.
     const onBlur = () => {
-      jumpRef.current.held = false;
+      input.jump.held = false;
     };
     window.addEventListener("keydown", onKey);
     window.addEventListener("keyup", onKeyUp);
@@ -334,7 +398,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       setAimBooth(null);
       setTeleportable(false);
     };
-  }, []);
+  }, [input]);
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.1);
@@ -343,9 +407,24 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     const { f, s } = panelOpen.current ? { f: 0, s: 0 } : moveAxes(input);
     const x0 = w.x;
     const z0 = w.z;
+    const g = glide.current;
+    const gliding = g !== null && !f && !s && !panelOpen.current && performance.now() / 1000 < g.until;
+    if (gliding) {
+      // Fast at first and easing in, at least running pace, so a far tap does not take seconds.
+      const dx = g.x - w.x;
+      const dz = g.z - w.z;
+      const d = Math.hypot(dx, dz);
+      const step = Math.min(d, Math.max(RUN, d * GLIDE_RATE) * dt);
+      if (d > 1e-3) {
+        w.x += (dx / d) * step;
+        w.z += (dz / d) * step;
+      }
+      if (d - step < 0.02) glide.current = null;
+    } else glide.current = null;
     if (f || s) {
-      bob.run = input.has("fast");
-      const speed = (bob.run ? RUN : WALK) / Math.hypot(f, s);
+      bob.run = isRunning(input);
+      // (f, s) is at most length 1: full speed on keys or a fully pushed stick, slower for a partly pushed one.
+      const speed = bob.run ? RUN : WALK;
       const sin = Math.sin(w.yaw);
       const cos = Math.cos(w.yaw);
       w.x += (-sin * f + cos * s) * speed * dt;
@@ -360,14 +439,14 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       jump.used = false;
     }
     if (panelOpen.current) {
-      jump.pressedAt = -Infinity;
+      input.jump.pressedAt = -Infinity;
     } else if (!jump.used && now - jump.groundedAt <= COYOTE_S) {
-      const buffered = now - jump.pressedAt <= JUMP_BUFFER_S;
-      const repeat = jump.held && jump.y === 0;
+      const buffered = now - input.jump.pressedAt <= JUMP_BUFFER_S;
+      const repeat = input.jump.held && jump.y === 0;
       if (buffered || repeat) {
         jump.vy = JUMP_V;
         jump.used = true;
-        jump.pressedAt = -Infinity;
+        input.jump.pressedAt = -Infinity;
       }
     }
     if (jump.vy || jump.y) {
@@ -379,7 +458,7 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
     // distance actually covered after collision, so pushing into a wall does not bob.
     const dist = Math.hypot(w.x - x0, w.z - z0);
     const nominal = bob.run ? RUN : WALK;
-    const bobbing = dist > BOB_MOVE_FRAC * nominal * dt && !reducedMotion.matches && !devEye.current && jump.y === 0;
+    const bobbing = !gliding && dist > BOB_MOVE_FRAC * nominal * dt && !reducedMotion.matches && !devEye.current && jump.y === 0;
     if (bobbing) bob.phase += dist / (nominal / (bob.run ? RUN_CADENCE : WALK_CADENCE));
     // Frame-rate independent exponential ease: amplitude chases its target and is ~0 within ~0.15 s of stopping.
     const target = bobbing ? (bob.run ? RUN_BOB_PP : WALK_BOB_PP) : 0;
@@ -398,7 +477,9 @@ export const RoadRig = ({ data, booths, flyKey, selected, input, pose, onSelect 
       mark.t += dt;
       const key = `${w.x.toFixed(2)},${w.z.toFixed(2)},${w.yaw.toFixed(3)},${pitch.current.toFixed(3)},${panelOpen.current}`;
       if (document.pointerLockElement !== gl.domElement) {
-        ring.visible = false;
+        // Unlocked (touch): the ring marks where a tap is gliding to.
+        ring.visible = glide.current !== null;
+        if (glide.current) ring.position.set(glide.current.x, TP_RING_Y, glide.current.z);
         mark.key = "";
         setAimBooth(null);
         setAimDoor(null);
@@ -500,6 +581,14 @@ const TP_RING_Y = 0.05;
 const TP_MARK_EVERY_S = 1 / 20;
 const TP_PILLAR_H = 3;
 const aimRay = new THREE.Raycaster();
+const tapNdc = new THREE.Vector2();
+// A touch press is a tap (interact) when it stays within this many CSS px and lifts within TAP_MS; otherwise it looked around.
+const TAP_SLOP_PX = 10;
+// Event timestamps, not handler time: a janky frame that delays pointerup must not turn a tap into a long press.
+const TAP_MS = 600;
+// Tap glide: speed is GLIDE_RATE x the remaining distance per second (at least RUN), stopped after GLIDE_MAX_S if blocked.
+const GLIDE_RATE = 5;
+const GLIDE_MAX_S = 2;
 const aimOrigin = new THREE.Vector3();
 const aimDir = new THREE.Vector3();
 const TP_SCALE_FROM_M = 4;

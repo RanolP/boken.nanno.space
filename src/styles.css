@@ -230,10 +230,45 @@ body { background: var(--bg); color: var(--fg); }
 .road-help .look-pan { animation-name: look-pan; }
 .road-help .look circle { fill: #3b5bdb; stroke: #8fa4ff; }
 .road-help .look-mouse { animation-name: look-slide; }
+/* Touch help (TouchHelp): the keyboard help's card, a 2 x 2 grid of animated controls, each drawn in the same white line and blue. */
+.touch-help { width: min(360px, calc(100% - 24px)); padding: 18px 18px 16px; }
+.touch-help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 12px; margin-bottom: 14px; }
+.touch-help figure { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; }
+.touch-help figure > svg { width: 116px; height: 96px; }
+.touch-help figure > div { height: 96px; display: flex; align-items: center; justify-content: center; }
+.touch-help figcaption { font-size: 12px; line-height: 1.4; color: #c9cdd6; text-align: center; }
+.touch-help figcaption strong { display: block; font-size: 14px; color: #fff; }
+.touch-help svg { fill: none; stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; overflow: visible; }
+.touch-help .stick-ring { fill: #ffffff14; }
+.touch-help .stick-ticks { fill: #8fa4ff; stroke: none; }
+.touch-help .stick-knob-anim { fill: #3b5bdb; stroke: #8fa4ff; animation: stick-push 4s ease-in-out infinite; }
+@keyframes stick-push {
+  0%, 8%, 25%, 33%, 50%, 58%, 75%, 83%, 100% { transform: none; }
+  15%, 18% { transform: translateY(-20px); }
+  40%, 43% { transform: translateX(20px); }
+  65%, 68% { transform: translateY(20px); }
+  90%, 93% { transform: translateX(-20px); }
+}
+.touch-help .look .phone { fill: #2a2d38; stroke: #8fa4ff; }
+.touch-help .finger { fill: #ffffffcc; stroke: #fff; stroke-width: 2; filter: drop-shadow(0 1px 2px #0008); }
+.touch-help .tap .floor { stroke: #8f96a3; }
+.touch-help .tap .floor-mid { stroke: #8f96a3; stroke-dasharray: 3 3; }
+.touch-help .tap .ring { stroke: #38bdf8; stroke-width: 2; }
+.touch-help .tap .pillar { fill: #38bdf833; stroke: none; }
+.touch-help .tap-mark { opacity: 0; animation: tap-mark 2s ease-out infinite; }
+.touch-help .tap-ripple { stroke: #fff; stroke-width: 2; opacity: 0; transform-box: fill-box; transform-origin: center; animation: tap-ripple 2s ease-out infinite; }
+.touch-help .tap-finger { transform-box: fill-box; transform-origin: center; animation: tap-finger 2s ease-in-out infinite; }
+@keyframes tap-finger { 0% { opacity: 0; transform: translate(10px, 14px) scale(1.2); } 20% { opacity: 1; transform: translate(4px, 6px) scale(1.15); } 32% { opacity: 1; transform: none; } 45% { opacity: 1; transform: none; } 60%, 100% { opacity: 0; transform: translate(6px, 10px) scale(1.15); } }
+@keyframes tap-ripple { 0%, 32% { opacity: 0; transform: scale(0.6); } 36% { opacity: 1; transform: scale(0.8); } 65%, 100% { opacity: 0; transform: scale(2.2); } }
+@keyframes tap-mark { 0%, 35% { opacity: 0; } 45%, 85% { opacity: 1; } 100% { opacity: 0; } }
+/* User: the run and jump drawn as the real buttons (.touch-btn below), at their real sizes; run flips between its off and on looks. */
+.touch-help-buttons > div { gap: 12px; }
+.touch-help .touch-run { animation: run-toggle 2.4s steps(1) infinite; }
+@keyframes run-toggle { 50% { background: #3b5bdb; box-shadow: 0 0 0 2px #fff, 0 0 12px #3b5bdbaa; } }
 @keyframes look-turn { from { transform: rotate(-35deg); } to { transform: rotate(35deg); } }
 @keyframes look-slide { from { transform: translateX(-14px); } to { transform: translateX(14px); } }
 @keyframes look-pan { from { transform: translateX(39px); } to { transform: translateX(-39px); } }
-@media (prefers-reduced-motion: reduce) { .road-help .look-wedge, .road-help .look-mouse, .road-help .look-pan { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .road-help .look-wedge, .road-help .look-mouse, .road-help .look-pan, .touch-help .stick-knob-anim, .touch-help .tap-mark, .touch-help .tap-ripple, .touch-help .tap-finger,  .touch-help .tap-mark { opacity: 1; } }
 .road-help .kb { position: relative; width: calc(12.2 * var(--u)); height: calc(6 * var(--u) + 32px); margin-bottom: 14px; }
 .road-help kbd, .road-help .kb span { position: absolute; height: calc(var(--u) - 4px); line-height: calc(var(--u) - 4px); box-sizing: border-box; }
 .road-help kbd { border: 1px solid #5b6070; border-bottom-width: 3px; border-radius: 5px; background: #2a2d38; font: inherit; font-size: 12px; text-align: center; line-height: calc(var(--u) - 8px); }
@@ -264,20 +299,34 @@ body { background: var(--bg); color: var(--fg); }
 @media (max-width: 700px) {
   .minimap { width: 128px; height: 128px; }
 }
-.move-pad { display: none; position: absolute; left: 12px; bottom: 12px; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 4px; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.move-pad button { border: 1px solid var(--line); border-radius: 12px; background: #fffd; font-size: 18px; color: var(--fg); touch-action: none; }
-.move-pad button:active { background: #dfe4ec; }
-.move-pad .pad-forward { grid-column: 2; grid-row: 1; }
-.move-pad .pad-left { grid-column: 1; grid-row: 2; }
-.move-pad .pad-back { grid-column: 2; grid-row: 2; }
-.move-pad .pad-right { grid-column: 3; grid-row: 2; }
+/* Touch controls (TouchControls): stick bottom left, run toggle and jump bottom right above the minimap; coarse pointers only. */
+.touch-ctl { display: none; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* The zone (bottom left, up to the lower ~40% of the view) takes the thumb anywhere; the base rests in its corner and jumps under the thumb. */
+.stick { position: absolute; left: 0; bottom: 0; width: min(46%, 240px); height: min(40%, 260px); }
+.stick-base { position: absolute; left: 16px; bottom: 16px; display: grid; place-items: center; width: 128px; height: 128px; border-radius: 50%; background: #14161c40; box-shadow: inset 0 0 0 2px #ffffff80, 0 2px 8px #0003; opacity: 0.7; pointer-events: none; }
+.stick.active .stick-base { opacity: 1; background: #14161c66; }
+.stick-knob { width: 56px; height: 56px; border-radius: 50%; background: #fffe; box-shadow: 0 2px 6px #0005; }
+.touch-actions { position: absolute; right: 16px; bottom: 232px; flex-direction: column; align-items: flex-end; gap: 12px; }
+/* One look for the on-screen buttons and their copies in the touch tutorial. */
+.touch-btn { display: grid; place-items: center; border: 0; border-radius: 50%; background: #14161cb3; color: #fff; box-shadow: 0 0 0 2px #ffffff80, 0 2px 8px #0004; }
+.touch-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.touch-actions button { touch-action: none; }
+.touch-jump { width: 56px; height: 56px; }
+.touch-jump svg path { fill: currentColor; stroke: none; }
+.touch-jump:active { background: #3b5bdb; }
+.touch-run { width: 72px; height: 72px; gap: 0; align-content: center; font-size: 11px; font-weight: 600; }
+.touch-run circle { fill: currentColor; stroke: none; }
+.touch-run[aria-pressed="true"] { background: #3b5bdb; box-shadow: 0 0 0 2px #fff, 0 0 12px #3b5bdbaa; }
 @media (pointer: coarse) {
-  .move-pad { display: grid; }
+  .stick { display: block; }
+  .touch-actions { display: flex; }
   .hint { display: none; }
+  .canvas { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 }
 @media (max-width: 700px) {
   /* The bottom-sheet panel covers the pad's corner; close the panel to walk again. */
-  .main:has(.panel) .move-pad { display: none; }
+  .main:has(.panel) .touch-ctl { display: none; }
+  .touch-actions { bottom: 160px; }
   .overlay { right: 8px; width: auto; gap: 4px; }
   .legend { flex-wrap: nowrap; overflow-x: auto; margin: 0; }
   .legend button { white-space: nowrap; flex: none; padding: 6px 10px; }

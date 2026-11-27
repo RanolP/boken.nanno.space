@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type RefObject } from "react";
 import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
+import { PerformanceMonitor } from "@react-three/drei";
 import * as THREE from "three";
 import { stageKey, stageOfArea, type AreaKind, type MapData } from "../maps/types";
 import { DroneRig, RoadRig } from "./CameraRigs";
@@ -10,6 +11,7 @@ import { Booths, FONT, buildAtlas, useLabelFont, type Tile } from "./BoothFrame"
 import { DebugProbe, debug } from "./DebugInspector";
 import { inkOn, type Ink } from "./contrast";
 import type { MoveInput, Pose, ViewMode } from "./walk";
+import { ATLAS_MAX, MAX_ANISOTROPY, MAX_DPR, MIN_DPR } from "./quality";
 
 type Booth = MapData["booths"][number];
 type Area = MapData["areas"][number];
@@ -59,13 +61,28 @@ export const Scene = ({ data, booths, selected, flyKey, view, input, pose, onSel
   const images = usePlanImages(urls);
   const fontReady = useLabelFont();
   const decals = useMemo(() => floorDecals(data, images, fontReady), [data, images, fontReady]);
+  // Render resolution follows the frame rate: PerformanceMonitor lowers it toward MIN_DPR while frames are slow and
+  // raises it back when they recover, in quarter steps so a resize does not happen on every small change.
+  const [dpr, setDpr] = useState(MAX_DPR);
   return (
     <Canvas
       className="canvas"
+      dpr={dpr}
       camera={{ fov: 45, near: 0.5, far: 3000 }}
       aria-label="3D 지도 / 3D map"
+      onCreated={({ gl }) => {
+        // three clamps every texture's anisotropy to this at upload time, so one cap covers the hard-coded 16s too.
+        const cap = Math.min(MAX_ANISOTROPY, gl.capabilities.getMaxAnisotropy());
+        gl.capabilities.getMaxAnisotropy = () => cap;
+      }}
       onPointerMissed={() => onSelect(null)}
     >
+      <PerformanceMonitor
+        factor={1}
+        flipflops={4}
+        onChange={({ factor }) => setDpr(Math.round((MIN_DPR + (MAX_DPR - MIN_DPR) * factor) * 4) / 4)}
+        onFallback={() => setDpr(MIN_DPR)}
+      />
       <color attach="background" args={["#eef1f5"]} />
       <ambientLight intensity={1.1} />
       <directionalLight position={[W / 2 + 80, 200, D / 2 + 60]} intensity={1.6} />
@@ -197,7 +214,7 @@ const AREA_KO: Record<AreaKind, string> = {
 };
 
 /** Longest canvas side for an area top, in texels. */
-const AREA_TEX_MAX = 2048;
+const AREA_TEX_MAX = ATLAS_MAX / 2;
 
 /** The area top: fill, then the plan images on it, then its label; null when there is nothing but the fill. */
 const areaCanvas = (a: Area, m: number, fill: string, markers: Marker[], images: Images | null, fontReady: boolean) => {
@@ -271,7 +288,7 @@ export type Decal = { x: number; y: number; w: number; h: number; draw: (ctx: Ca
 /** Atlas texels of each cell's surroundings drawn around it, so mip levels sample the true neighbour, not another tile. */
 const DECAL_GUTTER = 4;
 /** Longest cell side in source px, so long frame strips still shelf-pack into the atlas width. */
-const CELL_MAX = 2048;
+const CELL_MAX = ATLAS_MAX / 2;
 
 /**
  * The drone-view floor as one mesh. The plan rectangle is cut on every decal edge into a grid of cells; plain cells are

@@ -10,8 +10,8 @@ import { StagePanel } from "./booth-finder/StagePanel";
 import { stageOfKey } from "./maps/types";
 import { Legend } from "./booth-finder/Legend";
 import { DebugHud } from "./venue-view/DebugInspector";
-import { BoothProbe, MovePad, RoadHud, ViewToggle } from "./venue-view/ViewControls";
-import { isTypingTarget, useMoveKeys, type MoveInput, type Pose, type ViewMode } from "./venue-view/walk";
+import { BoothProbe, RoadHud, TouchControls, ViewToggle } from "./venue-view/ViewControls";
+import { isTypingTarget, newMoveInput, useMoveKeys, type MoveInput, type Pose, type ViewMode } from "./venue-view/walk";
 
 export const App = () => {
   const hashId = useHashId();
@@ -35,7 +35,7 @@ const MapView = ({ entry }: MapViewProps) => {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [flyKey, setFlyKey] = useState(0);
   const [view, setView] = useState<ViewMode>("road");
-  const [input] = useState<MoveInput>(() => new Set());
+  const [input] = useState<MoveInput>(newMoveInput);
   const pose = useRef<Pose | null>(startPose(data));
   useMoveKeys(input);
   // Crawled notice posts load in the background as the map opens, so a booth card draws its embeds on first paint.
@@ -71,7 +71,8 @@ const MapView = ({ entry }: MapViewProps) => {
   const closePanel = () => {
     setSelected(null);
     // Road view: closing the card goes straight back to mouse look; the click is the gesture the lock needs.
-    if (view === "road") void document.querySelector<HTMLCanvasElement>(".main canvas")?.requestPointerLock?.();
+    // Touch screens have no pointer lock (and no mouse look to return to).
+    if (view === "road" && matchMedia("(pointer: fine)").matches) void document.querySelector<HTMLCanvasElement>(".main canvas")?.requestPointerLock?.();
   };
 
   const toggle = (cat: string) =>
@@ -125,7 +126,7 @@ const MapView = ({ entry }: MapViewProps) => {
           <Legend categories={data.categories} hidden={hidden} onToggle={toggle} />
           <ViewToggle view={view} onChange={setView} />
         </div>
-        {view === "road" && <MovePad input={input} />}
+        {view === "road" && <TouchControls input={input} />}
         {view === "road" && <DebugHud />}
         {view === "road" && <RoadHud panelOpen={selectedBooth !== null || selectedStage !== null} />}
         {view === "road" && <BoothProbe data={data} />}
